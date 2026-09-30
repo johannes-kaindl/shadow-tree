@@ -1,0 +1,9 @@
+{
+  "source": "obsidian-kit",
+  "version": "0.45.1",
+  "sha": "325d3ff",
+  "vendored": "folder-hide.ts, vault-path.ts",
+  "code_kit_version": "0.8.0",
+  "code_kit_sha": "fdffb9d",
+  "code_kit_vendored": "settings.ts, i18n.ts"
+}

@@ -1,0 +1,48 @@
+{
+  "sources": {
+    "obsidian-kit": {
+      "ref": "0.45.1"
+    },
+    "code-kit": {
+      "ref": "0.8.0"
+    }
+  },
+  "targets": [
+    {
+      "dir": "src/vendor/kit",
+      "source": "obsidian-kit",
+      "from": "src/pure",
+      "modules": [
+        "folder-hide",
+        "vault-path"
+      ]
+    },
+    {
+      "dir": "src/vendor/kit",
+      "source": "code-kit",
+      "from": "src/ts/pure",
+      "modules": [
+        "settings",
+        "i18n"
+      ]
+    },
+    {
+      "dir": "src/vendor/kit-obsidian",
+      "source": "obsidian-kit",
+      "from": "src/obsidian",
+      "modules": [
+        "folder-suggest",
+        "help-setting",
+        "settings_walker"
+      ]
+    },
+    {
+      "dir": "tests/vendor/kit",
+      "source": "obsidian-kit",
+      "from": "src/testing",
+      "modules": [
+        "obsidian-mock"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "source": "obsidian-kit",
+  "version": "0.45.1",
+  "sha": "325d3ff",
+  "vendored": "folder-suggest.ts, help-setting.ts, settings_walker.ts"
+}

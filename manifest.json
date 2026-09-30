@@ -1,0 +1,10 @@
+{
+  "id": "shadow-tree",
+  "name": "Shadow Tree",
+  "version": "0.1.0",
+  "minAppVersion": "1.11.4",
+  "description": "Hides empty and irrelevant folders from the file explorer without deleting them: ignore patterns, per-folder pins, optional Sync exclusion.",
+  "author": "Johannes Kaindl",
+  "authorUrl": "https://github.com/johannes-kaindl",
+  "isDesktopOnly": false
+}
