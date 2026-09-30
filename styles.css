@@ -1,0 +1,42 @@
+/* Shadow Tree — Settings-Tab. Nur Theme-Variablen, kein !important, kein :has() (UI-STANDARD §3). */
+.sht-desc {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  margin-bottom: var(--size-4-2);
+}
+.sht-status {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  margin: var(--size-4-1) 0;
+}
+.sht-warning {
+  color: var(--text-warning);
+}
+.sht-empty {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  padding: var(--size-4-2) 0;
+}
+.sht-hidden-list {
+  font-size: var(--font-ui-small);
+  margin: var(--size-4-1) 0;
+}
+.sht-hidden-row {
+  display: flex;
+  gap: var(--size-4-2);
+  justify-content: space-between;
+  padding: var(--size-2-1) 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.sht-hidden-path {
+  font-family: var(--font-monospace);
+  overflow-wrap: anywhere;
+}
+.sht-hidden-reason {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.sht-hidden-more {
+  color: var(--text-muted);
+  border-bottom: none;
+}
