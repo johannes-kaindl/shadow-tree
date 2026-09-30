@@ -8,4 +8,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
--
+- Hide folders that hold no relevant file (default `md`, `canvas`, `base`) anywhere below them; the path to a deep note stays visible.
+- Ignore patterns in `.gitignore` style for folders (`node_modules`, anchored paths, `*`, `**`, `?`, `!` negation, comments); defaults `node_modules`, `dist`, `build`, `coverage`, `__pycache__`.
+- Pins per folder from the file-explorer context menu: "always show" (also protects the parents) and "always hide".
+- Ribbon toggle and command **Toggle hidden folders**; icon and tooltip name the current state (session switch, not persisted).
+- Settings tab with help row, rules, pinned folders, a "Currently hidden" list with reasons, and an opt-in switch that writes the hidden folders into Obsidian Sync's excluded folders (per device; user entries are never touched).
+- English and German interface.
