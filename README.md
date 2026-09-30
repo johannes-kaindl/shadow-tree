@@ -9,7 +9,7 @@
 [![Release](https://img.shields.io/github/v/release/johannes-kaindl/shadow-tree?label=release)](https://github.com/johannes-kaindl/shadow-tree/releases)
 ![Platform](https://img.shields.io/badge/platform-Obsidian%201.11.4%2B%20%C2%B7%20desktop%20%26%20mobile-7c3aed)
 
-Open a folder full of code repositories as a vault and the file explorer fills up with `node_modules`, build output and folders that never held a note. Shadow Tree filters that view. A folder disappears from the file explorer when nothing below it counts as content (by default Markdown, Canvas and Base files) or when an ignore pattern in `.gitignore` style matches it. Nothing is deleted, moved or renamed: the folders are still there, they are just not drawn. One click on the ribbon icon shows everything again.
+Open a folder full of code repositories as a vault and the file explorer fills up with `node_modules`, build output and folders that never held a note. Shadow Tree filters that view. A folder disappears from the file explorer when nothing below it counts as content (by default Markdown, Canvas and Base files) or when an ignore pattern in `.gitignore` style matches it. Notes inside a folder that a pattern hides do not count for its parents, so a repository whose only Markdown sits in `node_modules` disappears as a whole. Nothing is deleted, moved or renamed: the folders are still there, they are just not drawn. One click on the ribbon icon shows everything again.
 
 <img src="https://raw.githubusercontent.com/johannes-kaindl/shadow-tree/main/docs/images/hero.png" width="820" alt="Obsidian's file explorer with Shadow Tree active: the vault shows Welcome.md, repo-deep with its single note three folders down, and repo-notes with README and docs, while repo-empty, node_modules and dist are not drawn; the ribbon shows the eye-off icon">
 
@@ -20,7 +20,7 @@ Open a folder full of code repositories as a vault and the file explorer fills u
 - **Pins per folder** — right-click any folder and choose **Shadow Tree: always show** or **always hide**. "Always show" also keeps the folder's parents visible; pins beat every rule.
 - **One switch to see everything** — the ribbon icon (or the command **Toggle hidden folders**) reveals all hidden folders for this session. The icon and its tooltip name the current state.
 - **You can see why** — the settings tab lists what is hidden right now and why: empty, which pattern, or pinned.
-- **Optional: exclude from Obsidian Sync** — an opt-in switch writes the hidden folders into Obsidian Sync's excluded folders and removes them again when they reappear. Folders you excluded yourself are never touched.
+- **Optional: exclude from Obsidian Sync** — an opt-in switch writes the folders hidden by a pattern or an "always hide" pin into Obsidian Sync's excluded folders and removes them again when they reappear. Folders that are merely empty are not excluded, and folders you excluded yourself are never touched.
 
 <img src="https://raw.githubusercontent.com/johannes-kaindl/shadow-tree/main/docs/images/revealed.png" width="820" alt="The same vault after the toggle: repo-empty, node_modules and dist are drawn again and the ribbon shows the eye icon">
 
@@ -66,7 +66,7 @@ cd shadow-tree && npm install && npm run build
 | Relevant file types | Extensions that count as content, separated by commas or spaces. | `md, canvas, base` |
 | Ignore patterns | One rule per line in `.gitignore` style; matching folders are hidden even with notes inside. See [Ignore patterns](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/ignore-patterns.md). | `node_modules`, `dist`, `build`, `coverage`, `__pycache__` |
 | Pinned folders | Per-folder overrides: **Always show** or **Always hide**. Added from the folder context menu or here. | none |
-| Also exclude hidden folders from Obsidian Sync | Writes the hidden folders into Sync's excluded folders (per device) and removes them again later. Disabled when Sync is off or not connected to a remote vault. | off |
+| Also exclude hidden folders from Obsidian Sync | Writes the folders hidden by a pattern or an "always hide" pin into Sync's excluded folders (per device) and removes them again later; folders hidden only because they are empty are left alone. Disabled when Sync is off or not connected to a remote vault. Turn it off before disabling the plugin. | off |
 
 ## How it works
 
@@ -77,7 +77,9 @@ The plugin never touches the DOM of the file explorer. It reads the vault's fold
 - **Search, quick switcher and graph** still see notes inside hidden folders. Use Obsidian's own **Files and links → Excluded files** for that.
 - **Dot folders** such as `.obsidian` are never shown by Obsidian's file explorer; the plugin cannot reveal them.
 - **Only folders** are hidden, never single files.
-- **Sync exclusion is per device.** Obsidian Sync keeps its excluded folders on each device; the plugin writes the list of the device it runs on. The exclusion list is an internal part of the Sync core plugin without a public API; if a future Obsidian version changes it, the switch turns itself off and says so.
+- **Sync exclusion is per device.** Obsidian Sync keeps its excluded folders on each device; the plugin writes the list of the device it runs on. The exclusion list is an internal part of the Sync core plugin without a public API; if a future Obsidian version changes it, the switch is disabled and the status line says why, but entries already written stay in Sync's list until you remove them there. The same holds when you disable the plugin without turning the switch off first.
+- **Pop-out windows.** The stylesheet is installed in the main window only; a file explorer moved into a pop-out window shows all folders.
+- **Patterns and pins are case-sensitive**, matching Obsidian's own paths.
 
 ## Documentation
 

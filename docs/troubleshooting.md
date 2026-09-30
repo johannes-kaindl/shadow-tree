@@ -47,6 +47,10 @@ The status line under the switch names the reason:
 - **Obsidian Sync is enabled, but its exclusion list could not be reached in this version.** Obsidian changed the internal shape the plugin relies on. Please report the Obsidian version as an issue; the plugin keeps working without the Sync feature.
 - **Sync status has not been checked yet.** The plugin checks a few seconds after each change; reopen the tab.
 
+## Sync still lists folders after I disabled the plugin
+
+**Cause:** the plugin removes its own entries only while it runs and the switch is turned off; disabling the plugin with the switch on leaves them in Sync's excluded folders. Only folders hidden by a pattern or an "always hide" pin are ever written there. **What to do:** remove them under **Settings → Sync → Selective sync → Excluded folders**, or re-enable the plugin, turn the switch off, then disable it.
+
 ## Notes in hidden folders still appear in search
 
 **Cause:** the plugin only hides folders in the file explorer; search, quick switcher and graph are not filtered. **What to do:** use Obsidian's own **Settings → Files and links → Excluded files**.

@@ -21,7 +21,9 @@ Lines that cannot be read (a bare `!`, a bare `/`, a bare `**`) are skipped; the
 ## Interplay with the other rules
 
 - **Pins beat patterns.** A folder pinned **Always show** stays visible even if a pattern matches it, and so do its parents. A folder pinned **Always hide** is hidden regardless of patterns.
-- **Patterns beat notes.** A matching folder is hidden even if notes are inside; that is the point of hiding `node_modules`, which almost always contains a `README.md` somewhere.
+- **Patterns beat notes.** A matching folder is hidden even if notes are inside; that is the point of hiding `node_modules`, which almost always contains a `README.md` somewhere. Those notes also do not count for the parent: a repository whose only Markdown sits inside `node_modules` is empty and disappears as a whole.
+- **A show pin below wins over a hide pin above.** "Always show" on `a/b` keeps `a` visible even if `a` is pinned "Always hide" or matches a pattern; the pin protects the whole path down to it.
+- **Patterns and pin paths are case-sensitive.** `Node_Modules` does not match `node_modules`; use the spelling the file explorer shows.
 - **Patterns and emptiness are independent.** Turning **Hide empty folders** off leaves the patterns in force.
 - **Only the topmost match counts for display.** If `repo-a` is hidden, a pattern matching `repo-a/dist` changes nothing visible; it shows up in **Currently hidden** only when `repo-a` is visible.
 

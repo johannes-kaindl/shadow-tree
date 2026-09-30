@@ -12,5 +12,5 @@ All notable changes to this project are documented here. The format follows
 - Ignore patterns in `.gitignore` style for folders (`node_modules`, anchored paths, `*`, `**`, `?`, `!` negation, comments); defaults `node_modules`, `dist`, `build`, `coverage`, `__pycache__`.
 - Pins per folder from the file-explorer context menu: "always show" (also protects the parents) and "always hide".
 - Ribbon toggle and command **Toggle hidden folders**; icon and tooltip name the current state (session switch, not persisted).
-- Settings tab with help row, rules, pinned folders, a "Currently hidden" list with reasons, and an opt-in switch that writes the hidden folders into Obsidian Sync's excluded folders (per device; user entries are never touched).
+- Settings tab with help row, rules, pinned folders, a "Currently hidden" list with reasons, and an opt-in switch that writes the folders hidden by a pattern or pin into Obsidian Sync's excluded folders (per device; merely empty folders and user entries are never touched).
 - English and German interface.

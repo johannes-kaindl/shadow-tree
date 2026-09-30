@@ -10,7 +10,7 @@ Orientierung für KI-Agenten (Claude Code, Codex, …) und Mitwirkende an diesem
 
 **Projekt:** `shadow-tree` — Obsidian-Plugin, das Ordner im Datei-Explorer ausblendet, unter denen keine relevante Datei liegt oder die ein Ignore-Muster in `.gitignore`-Art trifft; Pins je Ordner übersteuern, ein Sitzungsschalter zeigt alles, ein Opt-in schreibt die ausgeblendeten Ordner in die Ausschlussliste von Obsidian Sync. Nichts wird gelöscht oder verschoben; das Plugin ist kosmetisch. Autor: Johannes Kaindl.
 
-**Kit-first-Befund:** Das Ausblenden eines Ordners ist im Kit gelöst (`obsidian-kit` `folder-hide` seit 0.42.0; Konsumenten vault-rag, slide-deck, vault-crews). Shadow Tree ist der erste Konsument mit einer **berechneten Menge**. Kit 0.46.0 erweitert `buildHideCss`/`installFolderHide` auf `string | string[]` (Entscheidung Dach-Master 2026-09-30); bis dahin trägt `src/obsidian/hide-sheet.ts` mit Herkunftsstempel.
+**Kit-first-Befund:** Das Ausblenden eines Ordners ist im Kit gelöst (`obsidian-kit` `folder-hide` seit 0.42.0; Konsumenten vault-rag, slide-deck, vault-crews). Shadow Tree ist der erste Konsument mit einer **berechneten Menge**; dafür nimmt `buildHideCss`/`installFolderHide` seit Kit 0.46.0 `string | string[]` (Entscheidung Dach-Master 2026-09-30, noch am selben Abend getaggt und hier vendort).
 
 ## Architecture principles
 
@@ -29,11 +29,10 @@ src/core/sync-plan.ts     planSyncExclusions(current, managed, desired) — frem
 src/core/debounce.ts      createDebouncer mit injizierten Timern
 src/core/hidden-view.ts   hiddenView / ribbonState (State → ViewModel, UI-STANDARD §6)
 src/obsidian/tree-snapshot.ts   TFolder → FolderNode
-src/obsidian/hide-sheet.ts      installHideSheet (abgeleitet aus Kit folder-hide, Liste statt Einzelordner)
 src/obsidian/sync-exclude.ts    syncFacade — interne Sync-API mit Existenz-Guards
 src/obsidian/folder-menu.ts     addPinMenuItems (file-menu)
 src/obsidian/settings-tab.ts    deklarativer Tab (getSettingDefinitions) + Kit-Walker-Fallback, Hilfe-Zeile zuerst
-src/i18n/strings.ts             alle Texte EN/DE (UI-STANDARD §10)
+src/i18n/strings.ts             alle Texte EN/DE (UI-STANDARD §10), `tn` für Zählformen (.one/.many)
 src/main.ts                     onload: Settings, Scheduler, Sheet, Ribbon, Command, Menü, Tab
 fixtures/vault/                 Fixture für GUI-Smoke und README-Bilder (drei Beispiel-Repos)
 scripts/gui-smoke.ts            CDP-Treiber (Zweitinstanz Port 9350), docs/SMOKE.md
@@ -59,7 +58,10 @@ scripts/shots.ts                README-Bilder (Skill readme-shots), Vertrag docs
 
 ## Gotchas
 
-- **`hide-sheet.ts` ist eine abgeleitete Kit-Datei, nicht vendort** (Herkunftsstempel in Zeile 1). Nach dem Tag Kit 0.46.0 durch das vendorte `folder-hide` ersetzen und die Datei löschen.
+- **Das Ausblende-Blatt kommt aus dem vendorten `kit-obsidian/folder-hide` (0.46.0, Listenform).** `update(paths, true)` mit leerer Liste ergibt ein leeres Blatt; das ist der Weg für „alles einblenden“.
+- **Inhalt eines per Muster oder Hide-Pin ausgeblendeten Kindes zählt für den Vorfahren nicht** (`gather` in `evaluate.ts`), sonst hielte `node_modules/…/README.md` ein Repo ohne eigene Notizen sichtbar. Ein Show-Pin darunter zählt weiter (Review 2026-09-30, Befund 1).
+- **In die Sync-Ausschlussliste wandern nur `pattern`- und `pinned`-Treffer, nie `empty`** — ein leerer Ordner kann Anhänge tragen, und ein auf Gerät B leerer Ordner bekäme dort nie die Notizen von Gerät A (Review 2026-09-30, Befund 3). Beim Deaktivieren des Plugins bleiben eigene Einträge stehen; die Schalter-Beschreibung sagt das.
+- **Text- und Textarea-Felder speichern bei `blur`**, nicht je Tastendruck: jedes Speichern rechnet neu und baut den Tab um (Review 2026-09-30, Befund 2). Ob `update()` des nativen 1.13-Hosts nach `setPin` frisch zeichnet, ist ungemessen (Backlog-Task).
 - **Die Sync-Fassade nutzt eine interne API** (`app.internalPlugins.plugins.sync.instance.setIgnoreFolders`, gemessen an obsidian-1.14.3.asar). Ohne Konto ist das Core-Plugin `enabled`, aber `vaultId` ist `null` und `getStatus()` meldet `disconnected` → Zustand `no-account`, Schalter gesperrt. Ändert Obsidian die Form, liefert `syncFacade` `no-api`, nichts bricht.
 - **`applySync` speichert über `saveData`, nie über `saveSettings`** — `saveSettings` ruft `recompute`, das den Sync-Entpreller erneut stellt: Endlosschleife.
 - **Der Ribbon-Zustand „alles einblenden“ ist Sitzungszustand**, nicht in `data.json`. Absicht (Spec § 6).
@@ -69,7 +71,7 @@ scripts/shots.ts                README-Bilder (Skill readme-shots), Vertrag docs
 
 ## Memory
 
-- 2026-09-30: Design-Session (Fable) mit Johannes: Brainstorming → Spec → Plan im Cockpit; Entscheidungen B/B/C/Ansatz 1 (Spec § 2). Autonome Umsetzung Tasks 1–14, Gate 63/63, GUI-Smoke 10/11 mit Gegenprobe rot an A, D, E, F, G. Kit-Vertragsfrage an den Dach-Master gemeldet und entschieden (Form 1, Kit 0.46.0 in Welle 14).
+- 2026-09-30: Design-Session (Fable) mit Johannes: Brainstorming → Spec → Plan im Cockpit; Entscheidungen B/B/C/Ansatz 1 (Spec § 2). Autonome Umsetzung Tasks 1–14, Gate 63/63, GUI-Smoke 10/11 mit Gegenprobe rot an A, D, E, F, G. Kit-Vertragsfrage an den Dach-Master gemeldet, entschieden und als Kit 0.46.0 getaggt; vendort, `hide-sheet.ts` gelöscht. Whole-Branch-Review (Sonnet): sechs Important-Befunde eingearbeitet (Evaluator zählt Inhalt ausgeblendeter Kinder nicht mehr; Sync nur pattern/pinned; Live-Sync-Status; blur-Commit; Unload-Guard; Doku-Korrekturen), Gate 65/65.
 
 ## Abweichungen von der Leitkonvention
 

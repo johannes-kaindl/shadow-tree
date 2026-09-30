@@ -7,7 +7,7 @@ Runs with `npm run smoke:gui -- --port 9350` against a second Obsidian instance 
 | # | What is measured | How |
 |---|---|---|
 | 0 | Plugin loaded, restricted mode of a fresh profile lifted | `app.plugins.plugins["shadow-tree"]` exists after `setEnable(true)` |
-| A | `repo-empty` (only `src/index.ts`) is hidden | `getComputedStyle(.nav-folder-title[data-path="repo-empty"]).display === "none"` |
+| A | `repo-empty` (only `src/index.ts` plus a `node_modules/tiny-dep/README.md` that must not count) is hidden | `getComputedStyle(.nav-folder-title[data-path="repo-empty"]).display === "none"` |
 | B | `repo-notes/node_modules` is hidden although it contains a README; `repo-notes` and `repo-notes/docs` stay visible | folder expanded, display values compared |
 | B2 | `repo-notes/dist` is hidden by the default pattern `dist` | display none |
 | C | `repo-deep` down to `a/b/c` (one note three levels down) stays visible | display of `repo-deep` and `repo-deep/a/b/c` |
@@ -25,3 +25,4 @@ The counter-probe disables the empty-folder rule in `src/core/evaluate.ts` (`if 
 | Date | Obsidian | Result | Counter-probe | Notes |
 |---|---|---|---|---|
 | 2026-09-30 | 1.14.3 (second instance, profile `/tmp/obs-test-shadow-tree`, port 9350) | 10 green · 0 red · 0 skipped · 1 not measured (G2), denominator 11 | red at A, D, E, F, G; green at 0, B, B2, C, H — as expected | First run had 3 driver errors (UI language was German, H ran with the settings window open): fixed in the driver, not the plugin. The counter-probe showed that B2 measures the `dist` pattern, not emptiness; the label was corrected. |
+| 2026-09-30 (after review fixes) | 1.14.3 (second instance, fresh process, English interface) | 10 green · 0 red · 0 skipped · 1 not measured (G2), denominator 11 | not repeated (counter-probe of the same morning holds; the evaluator change tightened A: `repo-empty` now carries a README inside `node_modules` and stays hidden) | Kit 0.46.0 vendored (`installFolderHide` with a list), text fields commit on blur, Sync exclusion only for pattern/pin reasons, live Sync status (G now shows "not connected to a remote vault" instead of the cached initial state). |
