@@ -55,7 +55,7 @@ describe("ShadowTreePlugin", () => {
   });
   it("writes the sync exclusion list only when opted in, and only its own entries", async () => {
     const calls: string[][] = [];
-    const instance = { filter: { ignoreFolders: ["user/own"] }, setIgnoreFolders(p: string[]) { calls.push(p); instance.filter.ignoreFolders = p; } };
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["user/own"] }, setIgnoreFolders(p: string[]) { calls.push(p); instance.filter.ignoreFolders = p; } };
     const { plugin, pending } = setup({ enabled: true, instance });
     await plugin.onload();
     pending.splice(0).forEach((cb) => cb());          // Sync-Entpreller feuern (Opt-in aus)
@@ -75,6 +75,7 @@ describe("ShadowTreePlugin", () => {
   it("reports sync as unavailable without the core plugin", async () => {
     const { plugin, pending } = setup();
     await plugin.onload();
+    expect(plugin.syncStatus()).toEqual({ kind: "pending" });
     pending.splice(0).forEach((cb) => cb());
     expect(plugin.syncStatus()).toEqual({ kind: "unavailable", reason: "no-plugin" });
   });

@@ -5,14 +5,15 @@ import type { App } from "obsidian";
  *  ⚠️ INTERNE API OHNE VERTRAG — gemessen an obsidian-1.14.3.asar (2026-09-30): die Sync-Instanz hält
  *  `filter.ignoreFolders: string[]` (Vault-relative Pfade ohne abschließenden Slash) und
  *  `setIgnoreFolders(paths)` ruft `changeFilter`, `forceSaveData` und `requestSync` — derselbe Aufruf, den der
- *  Dialog „Manage excluded folders“ benutzt. Ändert ein Obsidian-Update die Form, liefert `syncFacade`
+ *  Dialog „Manage excluded folders“ benutzt; `vaultId` ist die Kennung des verbundenen Remote-Vaults (null ohne
+ *  Konto). Ändert ein Obsidian-Update die Form, liefert `syncFacade`
  *  `no-api`, und das Plugin arbeitet ohne Sync-Ausschluss weiter; nichts bricht. */
-export type SyncUnavailable = "no-plugin" | "disabled" | "no-api";
+export type SyncUnavailable = "no-plugin" | "disabled" | "no-api" | "no-account";
 export type SyncFacade =
   | { available: true; getIgnoreFolders(): string[]; setIgnoreFolders(paths: string[]): void }
   | { available: false; reason: SyncUnavailable };
 
-interface SyncInstanceShape { filter: { ignoreFolders: string[] }; setIgnoreFolders(paths: string[]): void; }
+interface SyncInstanceShape { filter: { ignoreFolders: string[] }; setIgnoreFolders(paths: string[]): void; vaultId?: unknown; }
 
 function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null;
@@ -33,6 +34,9 @@ export function syncFacade(app: App): SyncFacade {
   if (sync.enabled !== true) return { available: false, reason: "disabled" };
   const instance = asInstance(sync.instance);
   if (instance === null) return { available: false, reason: "no-api" };
+  // Gemessen 2026-09-30 an einer Zweitinstanz ohne Konto: das Core-Plugin ist `enabled`, `setIgnoreFolders` existiert,
+  // aber `vaultId` ist null und `getStatus()` meldet "disconnected". Ohne Remote-Vault gibt es nichts auszuschließen.
+  if (typeof instance.vaultId !== "string" || instance.vaultId === "") return { available: false, reason: "no-account" };
   return {
     available: true,
     getIgnoreFolders: () => instance.filter.ignoreFolders.filter((p): p is string => typeof p === "string").slice(),

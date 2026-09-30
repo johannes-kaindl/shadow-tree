@@ -168,7 +168,8 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
   private renderSyncStatus(setting: Setting): void {
     const host = settingBodyHost(setting);
     const status = this.plugin.syncStatus();
-    const text = status.kind === "unavailable" ? t(`sync.unavailable.${status.reason}`)
+    const text = status.kind === "pending" ? t("sync.pending")
+      : status.kind === "unavailable" ? t(`sync.unavailable.${status.reason}`)
       : status.kind === "error" ? t("sync.error", status.message)
       : t("sync.managed", String(status.managed));
     host.createDiv({ cls: status.kind === "error" ? "sht-status sht-warning" : "sht-status", text });

@@ -18,9 +18,13 @@ describe("syncFacade", () => {
     expect(syncFacade(appWith({ enabled: true, instance: { filter: { ignoreFolders: [] } } }))).toEqual({ available: false, reason: "no-api" });
     expect(syncFacade(appWith({ enabled: true, instance: { setIgnoreFolders() {}, filter: { ignoreFolders: "x" } } }))).toEqual({ available: false, reason: "no-api" });
   });
+  it("reports no-account when the instance has no remote vault id (measured: null without an account)", () => {
+    const instance = { filter: { ignoreFolders: [] }, setIgnoreFolders() {}, vaultId: null };
+    expect(syncFacade(appWith({ enabled: true, instance }))).toEqual({ available: false, reason: "no-account" });
+  });
   it("exposes a copy of the list and forwards writes", () => {
     const calls: string[][] = [];
-    const instance = { filter: { ignoreFolders: ["u"] }, setIgnoreFolders(p: string[]) { calls.push(p); } };
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["u"] }, setIgnoreFolders(p: string[]) { calls.push(p); } };
     const f = syncFacade(appWith({ enabled: true, instance }));
     expect(f.available).toBe(true);
     if (!f.available) return;

@@ -13,6 +13,7 @@ import { syncFacade, type SyncUnavailable } from "./obsidian/sync-exclude";
 import { snapshotVault } from "./obsidian/tree-snapshot";
 
 export type SyncStatus =
+  | { kind: "pending" }
   | { kind: "unavailable"; reason: SyncUnavailable }
   | { kind: "ok"; managed: number }
   | { kind: "error"; message: string };
@@ -42,7 +43,7 @@ export default class ShadowTreePlugin extends Plugin {
   private ribbon: HTMLElement | null = null;
   private viewDebounce!: Debouncer;
   private syncDebounce!: Debouncer;
-  private lastSync: SyncStatus = { kind: "unavailable", reason: "no-plugin" };
+  private lastSync: SyncStatus = { kind: "pending" };
   private noticed = false;
 
   async onload(): Promise<void> {
