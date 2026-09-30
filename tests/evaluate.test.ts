@@ -43,6 +43,20 @@ describe("evaluate", () => {
     expect(h).not.toContain("repo-empty");
     expect(h).not.toContain("repo-empty/src");
   });
+  it("notes inside a pattern-hidden child do not keep the parent visible (node_modules with README)", () => {
+    const repo = f("", [], [f("repo", ["ts"], [f("repo/node_modules", [], [f("repo/node_modules/pkg", ["md"])])])]);
+    const withPattern = evaluate(repo, rules({ rules: parsePatterns("node_modules").rules }));
+    expect(withPattern).toEqual([{ path: "repo", reason: { kind: "empty" } }]);
+    const withoutPattern = evaluate(repo, rules());
+    expect(paths(withoutPattern)).toEqual([]);
+    const hidePinned = evaluate(repo, rules({ pins: { "repo/node_modules": "hide" } }));
+    expect(paths(hidePinned)).toEqual(["repo"]);
+  });
+  it("a show pin below a hide-pinned ancestor keeps the ancestor visible", () => {
+    const tree = f("", [], [f("a", ["md"], [f("a/b", ["md"])])]);
+    expect(paths(evaluate(tree, rules({ pins: { a: "hide", "a/b": "show" } })))).toEqual([]);
+    expect(paths(evaluate(tree, rules({ pins: { a: "hide" } })))).toEqual(["a"]);
+  });
   it("pin show on a folder that matches a pattern itself keeps it visible", () => {
     const r = rules({ rules: parsePatterns("dist").rules, pins: { "repo-a/dist": "show" } });
     expect(paths(evaluate(vault, r))).not.toContain("repo-a/dist");

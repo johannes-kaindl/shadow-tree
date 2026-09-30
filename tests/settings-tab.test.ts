@@ -37,7 +37,7 @@ describe("ShadowTreeSettingTab", () => {
     tab.display();
     const all = texts(tab.containerEl).join("\n");
     expect(all).toContain("No pinned folders yet.");
-    expect(all).toContain("2 folder(s) are hidden right now.");
+    expect(all).toContain("2 folders are hidden right now.");
     expect(all).toContain("repo-empty");
     expect(all).toContain("pattern node_modules");
     expect(all).toContain("Obsidian Sync is not enabled in this vault.");
@@ -49,7 +49,7 @@ describe("ShadowTreeSettingTab", () => {
     tab.display();
     const all = texts(tab.containerEl).join("\n");
     expect(all).not.toContain("No pinned folders yet.");
-    expect(all).toContain("1 line(s) could not be read and were skipped: !");
+    expect(all).toContain("1 line could not be read and was skipped: !");
   });
   it("setControlValue writes the field and saves", async () => {
     let saves = 0;

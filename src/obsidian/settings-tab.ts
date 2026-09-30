@@ -5,6 +5,7 @@ import { renderSettingDefinitions, settingBodyHost, refreshSettingsTab } from ".
 import { githubHelpUrls, helpSettingDefinition, type HelpSettingOptions } from "../vendor/kit-obsidian/help-setting";
 import { FolderSuggest } from "../vendor/kit-obsidian/folder-suggest";
 import { hiddenView } from "../core/hidden-view";
+import { tn } from "../i18n/strings";
 import { normalizeFolderPath } from "../core/ignore";
 import { withPin, type PinState } from "../core/settings";
 
@@ -34,8 +35,8 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
       helpSettingDefinition(helpOptions()),
       { type: "group", heading: t("group.rules"), items: [
         { name: t("set.hideEmpty"), desc: t("set.hideEmptyDesc"), control: { type: "toggle", key: "hideEmpty" } },
-        { name: t("set.extensions"), desc: t("set.extensionsDesc"), control: { type: "text", key: "relevantExtensions" } },
-        { name: t("set.patterns"), desc: t("set.patternsDesc"), control: { type: "textarea", key: "ignorePatterns", rows: 6 } },
+        { name: t("set.extensions"), desc: t("set.extensionsDesc"), render: (s) => { this.renderTextField(s, "relevantExtensions", "set.extensions", "set.extensionsDesc", false); } },
+        { name: t("set.patterns"), desc: t("set.patternsDesc"), render: (s) => { this.renderTextField(s, "ignorePatterns", "set.patterns", "set.patternsDesc", true); } },
         { name: t("set.patterns"), visible: () => this.plugin.invalidPatterns.length > 0, render: (s) => { this.renderInvalid(s); } },
       ] },
       { type: "group", heading: t("group.pins"), items: [
@@ -92,10 +93,36 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     this.refreshUi();
   }
 
+  /** Text- und Textarea-Felder speichern bei `blur`, nicht je Tastendruck (UI-STANDARD §8, Spec § 6): ein Speichern
+   *  löst Snapshot, Evaluator und Tab-Neuaufbau aus — je Zeichen würde das Feld unter dem Cursor zerstört
+   *  (Review 2026-09-30, Befund 2). Name und Beschreibung setzt der Hatch selbst, weil ungemessen ist, ob der native
+   *  1.13-Host sie vor `render` setzt (Kit-Kommentar help-setting). */
+  private renderTextField(setting: Setting, key: "relevantExtensions" | "ignorePatterns", nameKey: string, descKey: string, multiline: boolean): void {
+    setting.setName(t(nameKey)).setDesc(t(descKey));
+    const commit = (value: string): void => {
+      if (value === this.plugin.settings[key]) return;
+      void this.setControlValue(key, value);
+    };
+    if (multiline) {
+      setting.addTextArea((ta) => {
+        ta.setValue(this.plugin.settings[key]);
+        ta.inputEl.rows = 6;
+        ta.inputEl.setAttribute("aria-label", t(nameKey));
+        ta.inputEl.addEventListener("blur", () => { commit(ta.getValue()); });
+      });
+    } else {
+      setting.addText((tx) => {
+        tx.setValue(this.plugin.settings[key]);
+        tx.inputEl.setAttribute("aria-label", t(nameKey));
+        tx.inputEl.addEventListener("blur", () => { commit(tx.getValue()); });
+      });
+    }
+  }
+
   private renderInvalid(setting: Setting): void {
     const host = settingBodyHost(setting);
     const bad = this.plugin.invalidPatterns;
-    host.createDiv({ cls: "sht-status sht-warning", text: t("set.patternsInvalid", String(bad.length), bad.join(", ")) });
+    host.createDiv({ cls: "sht-status sht-warning", text: tn("set.patternsInvalid", bad.length, bad.join(", ")) });
   }
 
   private renderPins(setting: Setting): void {
@@ -105,7 +132,6 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     if (entries.length === 0) host.createDiv({ cls: "sht-empty", text: t("pin.empty") });
     for (const [path, state] of entries) {
       const row = new Setting(host).setName(path);
-      row.settingEl.addClass("sht-pin-row");
       row.addDropdown((d) => {
         d.addOption("show", t("pin.show")).addOption("hide", t("pin.hide")).setValue(state);
         d.selectEl.setAttribute("aria-label", t("pin.ariaState"));
@@ -116,7 +142,6 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     let newPath = "";
     let newState: PinState = "show";
     const adder = new Setting(host).setName(t("pin.add"));
-    adder.settingEl.addClass("sht-pin-row");
     adder.addText((tx) => {
       tx.setPlaceholder(t("pin.addPlaceholder"));
       tx.inputEl.setAttribute("aria-label", t("pin.ariaPath"));
@@ -139,7 +164,7 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     const view = hiddenView(this.plugin.hidden);
     if (!this.plugin.sheetSupported) host.createDiv({ cls: "sht-status sht-warning", text: t("hidden.unsupported") });
     if (this.plugin.revealed) host.createDiv({ cls: "sht-status", text: t("hidden.revealed") });
-    host.createDiv({ cls: "sht-status", text: view.total === 0 ? t("hidden.none") : t("hidden.count", String(view.total)) });
+    host.createDiv({ cls: "sht-status", text: view.total === 0 ? t("hidden.none") : tn("hidden.count", view.total) });
     const list = host.createDiv({ cls: "sht-hidden-list" });
     for (const row of view.rows) {
       const r = list.createDiv({ cls: "sht-hidden-row" });
@@ -171,7 +196,7 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     const text = status.kind === "pending" ? t("sync.pending")
       : status.kind === "unavailable" ? t(`sync.unavailable.${status.reason}`)
       : status.kind === "error" ? t("sync.error", status.message)
-      : t("sync.managed", String(status.managed));
+      : tn("sync.managed", status.managed);
     host.createDiv({ cls: status.kind === "error" ? "sht-status sht-warning" : "sht-status", text });
   }
 }

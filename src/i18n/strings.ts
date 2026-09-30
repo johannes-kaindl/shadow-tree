@@ -1,4 +1,4 @@
-import { defineStrings } from "../vendor/kit/i18n";
+import { defineStrings, t } from "../vendor/kit/i18n";
 
 /** Alle Nutzertexte (UI-STANDARD §10). EN ist kanonisch, DE vollständig; Schlüsselmengen prüft tests/strings.test.ts. */
 export const STRINGS = {
@@ -14,8 +14,9 @@ export const STRINGS = {
     "set.extensions": "Relevant file types",
     "set.extensionsDesc": "File extensions that count as content, separated by commas or spaces. Everything else (code, images, build output) does not keep a folder visible.",
     "set.patterns": "Ignore patterns",
-    "set.patternsDesc": "One rule per line, like a .gitignore for folders: a name without slash matches at any depth (node_modules), a path with slash is anchored at the vault root, * stays inside a folder name, ** crosses folders, ! undoes an earlier rule. Matching folders are hidden even if they contain notes.",
-    "set.patternsInvalid": "{0} line(s) could not be read and were skipped: {1}",
+    "set.patternsDesc": "One rule per line, like a .gitignore for folders: a name without slash matches at any depth (node_modules), a path with slash is anchored at the vault root, * stays inside a folder name, ** crosses folders, ! undoes an earlier rule. Matching folders are hidden even if they contain notes, and their notes do not keep the parent visible. Case-sensitive. Full syntax: Help → Open documentation.",
+    "set.patternsInvalid.one": "{0} line could not be read and was skipped: {1}",
+    "set.patternsInvalid.many": "{0} lines could not be read and were skipped: {1}",
     "group.pins": "Pinned folders",
     "set.pinsDesc": "Pins override rules: \"Always show\" keeps a folder and its parents visible, \"Always hide\" hides it even with notes inside. Right-click a folder in the file explorer to pin it.",
     "pin.show": "Always show",
@@ -27,7 +28,8 @@ export const STRINGS = {
     "pin.ariaPath": "Folder path to pin",
     "pin.ariaState": "Pin state",
     "group.hidden": "Currently hidden",
-    "hidden.count": "{0} folder(s) are hidden right now. Children of a hidden folder are not listed.",
+    "hidden.count.one": "{0} folder is hidden right now. Children of a hidden folder are not listed.",
+    "hidden.count.many": "{0} folders are hidden right now. Children of a hidden folder are not listed.",
     "hidden.none": "Nothing is hidden right now.",
     "hidden.more": "… and {0} more",
     "hidden.revealed": "All folders are visible at the moment (toggled from the ribbon or the command). The list below shows what would be hidden.",
@@ -38,16 +40,18 @@ export const STRINGS = {
     "hidden.searchNote": "Notes inside hidden folders still appear in search and the quick switcher. Use Obsidian's \"Excluded files\" setting for that.",
     "group.sync": "Obsidian Sync",
     "set.syncExclude": "Also exclude hidden folders from Obsidian Sync",
-    "set.syncExcludeDesc": "Writes the currently hidden folders into the excluded folders of Obsidian Sync (Settings → Sync → Selective sync) and removes them again when they become visible or this switch is turned off. Folders you excluded yourself are never touched. Sync keeps this list per device.",
+    "set.syncExcludeDesc": "Writes the folders hidden by an ignore pattern or an \"Always hide\" pin into the excluded folders of Obsidian Sync (Settings → Sync → Selective sync) and removes them again when they become visible or this switch is turned off. Folders hidden only because they are empty are not excluded: they may hold attachments you still want on other devices. Folders you excluded yourself are never touched. Sync keeps this list per device. Turn this switch off before disabling the plugin, otherwise its entries stay in the list.",
     "sync.unavailable.no-plugin": "Obsidian Sync is not available in this app.",
     "sync.unavailable.disabled": "Obsidian Sync is not enabled in this vault.",
     "sync.unavailable.no-api": "Obsidian Sync is enabled, but its exclusion list could not be reached in this version.",
     "sync.unavailable.no-account": "Obsidian Sync is enabled, but this vault is not connected to a remote vault.",
-    "sync.managed": "{0} folder(s) are excluded from Sync by Shadow Tree.",
+    "sync.managed.one": "{0} folder is excluded from Sync by Shadow Tree.",
+    "sync.managed.many": "{0} folders are excluded from Sync by Shadow Tree.",
     "sync.pending": "Sync status has not been checked yet; it is checked a few seconds after each change.",
     "sync.error": "Writing the Sync exclusion list failed: {0}",
     "cmd.toggle": "Toggle hidden folders",
-    "ribbon.hiding": "Shadow Tree: hiding {0} folder(s) — click to reveal",
+    "ribbon.hiding.one": "Shadow Tree: hiding {0} folder — click to reveal",
+    "ribbon.hiding.many": "Shadow Tree: hiding {0} folders — click to reveal",
     "ribbon.revealed": "Shadow Tree: all folders visible — click to hide",
     "menu.show": "Shadow Tree: always show",
     "menu.hide": "Shadow Tree: always hide",
@@ -65,9 +69,10 @@ export const STRINGS = {
     "set.hideEmptyDesc": "Ein Ordner ist leer, wenn nirgends unter ihm eine Datei eines relevanten Typs liegt.",
     "set.extensions": "Relevante Dateitypen",
     "set.extensionsDesc": "Dateiendungen, die als Inhalt zählen, durch Komma oder Leerzeichen getrennt. Alles andere (Code, Bilder, Build-Ausgaben) hält einen Ordner nicht sichtbar.",
-    "set.patterns": "Ignore-Muster",
-    "set.patternsDesc": "Eine Regel je Zeile, wie eine .gitignore für Ordner: ein Name ohne Schrägstrich trifft in jeder Tiefe (node_modules), ein Pfad mit Schrägstrich gilt ab dem Vault-Wurzelordner, * bleibt innerhalb eines Ordnernamens, ** geht über Ordner hinweg, ! hebt eine frühere Regel auf. Getroffene Ordner werden auch mit Notizen darin ausgeblendet.",
-    "set.patternsInvalid": "{0} Zeile(n) konnten nicht gelesen werden und wurden übersprungen: {1}",
+    "set.patterns": "Ausschlussmuster",
+    "set.patternsDesc": "Eine Regel je Zeile, wie eine .gitignore für Ordner: ein Name ohne Schrägstrich trifft in jeder Tiefe (node_modules), ein Pfad mit Schrägstrich gilt ab dem Vault-Wurzelordner, * bleibt innerhalb eines Ordnernamens, ** geht über Ordner hinweg, ! hebt eine frühere Regel auf. Getroffene Ordner werden auch mit Notizen darin ausgeblendet, und ihre Notizen halten den Elternordner nicht sichtbar. Groß- und Kleinschreibung zählt. Vollständige Syntax: Hilfe → Dokumentation öffnen.",
+    "set.patternsInvalid.one": "{0} Zeile konnte nicht gelesen werden und wurde übersprungen: {1}",
+    "set.patternsInvalid.many": "{0} Zeilen konnten nicht gelesen werden und wurden übersprungen: {1}",
     "group.pins": "Angepinnte Ordner",
     "set.pinsDesc": "Pins schlagen Regeln: „Immer anzeigen“ hält einen Ordner und seine Elternordner sichtbar, „Immer verstecken“ blendet ihn auch mit Notizen aus. Rechtsklick auf einen Ordner im Datei-Explorer pinnt ihn.",
     "pin.show": "Immer anzeigen",
@@ -79,7 +84,8 @@ export const STRINGS = {
     "pin.ariaPath": "Ordnerpfad zum Anpinnen",
     "pin.ariaState": "Pin-Zustand",
     "group.hidden": "Derzeit ausgeblendet",
-    "hidden.count": "{0} Ordner sind gerade ausgeblendet. Kinder eines ausgeblendeten Ordners werden nicht aufgeführt.",
+    "hidden.count.one": "{0} Ordner ist gerade ausgeblendet. Kinder eines ausgeblendeten Ordners werden nicht aufgeführt.",
+    "hidden.count.many": "{0} Ordner sind gerade ausgeblendet. Kinder eines ausgeblendeten Ordners werden nicht aufgeführt.",
     "hidden.none": "Gerade ist nichts ausgeblendet.",
     "hidden.more": "… und {0} weitere",
     "hidden.revealed": "Gerade sind alle Ordner sichtbar (über das Seitenleisten-Symbol oder den Befehl umgeschaltet). Die Liste zeigt, was ausgeblendet würde.",
@@ -90,16 +96,18 @@ export const STRINGS = {
     "hidden.searchNote": "Notizen in ausgeblendeten Ordnern erscheinen weiter in Suche und Schnellwechsler. Dafür ist Obsidians Einstellung „Ausgeschlossene Dateien“ da.",
     "group.sync": "Obsidian Sync",
     "set.syncExclude": "Ausgeblendete Ordner auch aus Obsidian Sync ausschließen",
-    "set.syncExcludeDesc": "Trägt die gerade ausgeblendeten Ordner in die ausgeschlossenen Ordner von Obsidian Sync ein (Einstellungen → Sync → Selektive Synchronisation) und nimmt sie wieder heraus, wenn sie sichtbar werden oder dieser Schalter aus geht. Ordner, die du selbst ausgeschlossen hast, werden nie angefasst. Sync führt diese Liste je Gerät.",
+    "set.syncExcludeDesc": "Trägt die durch ein Ausschlussmuster oder einen „Immer verstecken“-Pin ausgeblendeten Ordner in die ausgeschlossenen Ordner von Obsidian Sync ein (Einstellungen → Sync → Selektive Synchronisation) und nimmt sie wieder heraus, wenn sie sichtbar werden oder dieser Schalter aus geht. Ordner, die nur leer sind, werden nicht ausgeschlossen: Sie können Anhänge tragen, die du auf anderen Geräten willst. Ordner, die du selbst ausgeschlossen hast, werden nie angefasst. Sync führt diese Liste je Gerät. Schalte diesen Schalter aus, bevor du das Plugin deaktivierst, sonst bleiben seine Einträge in der Liste.",
     "sync.unavailable.no-plugin": "Obsidian Sync ist in dieser App nicht verfügbar.",
     "sync.unavailable.disabled": "Obsidian Sync ist in diesem Vault nicht aktiviert.",
     "sync.unavailable.no-api": "Obsidian Sync ist aktiv, aber seine Ausschlussliste war in dieser Version nicht erreichbar.",
     "sync.unavailable.no-account": "Obsidian Sync ist aktiv, aber dieser Vault ist mit keinem Remote-Vault verbunden.",
-    "sync.managed": "{0} Ordner sind durch Shadow Tree von Sync ausgeschlossen.",
+    "sync.managed.one": "{0} Ordner ist durch Shadow Tree von Sync ausgeschlossen.",
+    "sync.managed.many": "{0} Ordner sind durch Shadow Tree von Sync ausgeschlossen.",
     "sync.pending": "Der Sync-Status wurde noch nicht geprüft; das passiert einige Sekunden nach jeder Änderung.",
     "sync.error": "Schreiben der Sync-Ausschlussliste fehlgeschlagen: {0}",
     "cmd.toggle": "Ausgeblendete Ordner umschalten",
-    "ribbon.hiding": "Shadow Tree: {0} Ordner ausgeblendet — Klick zeigt alle",
+    "ribbon.hiding.one": "Shadow Tree: {0} Ordner ausgeblendet — Klick zeigt alle",
+    "ribbon.hiding.many": "Shadow Tree: {0} Ordner ausgeblendet — Klick zeigt alle",
     "ribbon.revealed": "Shadow Tree: alle Ordner sichtbar — Klick blendet aus",
     "menu.show": "Shadow Tree: immer anzeigen",
     "menu.hide": "Shadow Tree: immer verstecken",
@@ -109,3 +117,8 @@ export const STRINGS = {
 } as const;
 
 defineStrings(STRINGS);
+
+/** Zählform: `<base>.one` bei genau 1, sonst `<base>.many`; die Zahl ist immer Platzhalter {0}. */
+export function tn(base: string, n: number, ...rest: (string | number)[]): string {
+  return t(n === 1 ? `${base}.one` : `${base}.many`, String(n), ...rest);
+}

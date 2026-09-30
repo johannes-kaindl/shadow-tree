@@ -14,6 +14,7 @@ export function hiddenView(list: readonly HiddenFolder[], cap = 50): HiddenView 
 }
 
 /** §8 Zustands-Knopf: Icon und Text zeigen den IST-Zustand, zwei Kanäle (Glyphe + Text), Farbe keiner davon. */
+/** `labelKey` ist bei „hiding“ die Basis einer Zählform (`.one`/`.many`, siehe `tn` in strings.ts). */
 export function ribbonState(hiddenCount: number, revealed: boolean): { icon: "eye" | "eye-off"; labelKey: "ribbon.hiding" | "ribbon.revealed"; count: number } {
   return revealed
     ? { icon: "eye", labelKey: "ribbon.revealed", count: hiddenCount }

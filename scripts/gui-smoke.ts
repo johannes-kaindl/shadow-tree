@@ -224,8 +224,8 @@ async function main(): Promise<void> {
       const items = Array.from(root.querySelectorAll(".vertical-tab-content .setting-item, .setting-item"));
       const first = items.length ? (items[0].querySelector(".setting-item-name") || {}).textContent || null : null;
       const all = root.textContent || "";
-      const hidden = (all.match(/(\\d+) folder\\(s\\) are hidden right now|(\\d+) Ordner sind gerade ausgeblendet/) || [null])[0];
-      const sync = (all.match(/Obsidian Sync is not (enabled|available)[^.]*\\.|Obsidian Sync ist in diese[mr] (Vault|App) nicht [^.]*\\.|Obsidian Sync is enabled, but[^.]*\\.|Obsidian Sync ist aktiv, aber[^.]*\\.|\\d+ folder\\(s\\) are excluded from Sync by Shadow Tree\\.|\\d+ Ordner sind durch Shadow Tree von Sync ausgeschlossen\\.|Sync status has not been checked yet[^.]*\\.|Der Sync-Status wurde noch nicht geprüft[^.]*\\./) || [null])[0];
+      const hidden = (all.match(/(\\d+) folders? (?:is|are) hidden right now|(\\d+) Ordner (?:ist|sind) gerade ausgeblendet/) || [null])[0];
+      const sync = (all.match(/Obsidian Sync is not (enabled|available)[^.]*\\.|Obsidian Sync ist in diese[mr] (Vault|App) nicht [^.]*\\.|Obsidian Sync is enabled, but[^.]*\\.|Obsidian Sync ist aktiv, aber[^.]*\\.|\\d+ folders? (?:is|are) excluded from Sync by Shadow Tree\\.|\\d+ Ordner (?:ist|sind) durch Shadow Tree von Sync ausgeschlossen\\.|Sync status has not been checked yet[^.]*\\.|Der Sync-Status wurde noch nicht geprüft[^.]*\\./) || [null])[0];
       const toggle = Array.from(root.querySelectorAll(".checkbox-container")).find((t) => /exclude hidden folders|Ordner auch aus Obsidian Sync/i.test((t.closest(".setting-item") || {}).textContent || ""));
       return { first, hidden, sync, syncDisabled: toggle ? toggle.classList.contains("is-disabled") || toggle.hasAttribute("disabled") || toggle.getAttribute("aria-disabled") === "true" : null };
     `);
