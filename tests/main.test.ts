@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { TFile, TFolder } from "./vendor/kit/obsidian-mock";
 import ShadowTreePlugin from "../src/main";
-import type { HideSheetHandle } from "../src/obsidian/hide-sheet";
+import type { FolderHideHandle } from "../src/vendor/kit-obsidian/folder-hide";
 
 function folder(path: string, ...children: (TFolder | TFile)[]): TFolder {
   const f = new TFolder(path);
@@ -20,9 +20,10 @@ function setup(sync?: unknown) {
   const plugin = new ShadowTreePlugin(app as never, { id: "shadow-tree", name: "Shadow Tree", version: "0.0.0" } as never);
   const updates: string[][] = [];
   let removed = 0;
+  const asList = (p: string | readonly string[]): string[] => (typeof p === "string" ? [p] : [...p]);
   plugin.installSheet = (_doc, paths) => {
-    updates.push([...paths]);
-    const h: HideSheetHandle = { supported: true, update: (p) => { updates.push([...p]); }, remove: () => { removed++; } };
+    updates.push(asList(paths));
+    const h: FolderHideHandle = { supported: true, update: (p, hide) => { updates.push(hide ? asList(p) : []); }, remove: () => { removed++; } };
     return h;
   };
   const pending: (() => void)[] = [];
@@ -58,14 +59,16 @@ describe("ShadowTreePlugin", () => {
     const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["user/own"] }, setIgnoreFolders(p: string[]) { calls.push(p); instance.filter.ignoreFolders = p; } };
     const { plugin, pending } = setup({ enabled: true, instance });
     await plugin.onload();
+    expect(plugin.syncStatus()).toEqual({ kind: "pending" });
     pending.splice(0).forEach((cb) => cb());          // Sync-Entpreller feuern (Opt-in aus)
     expect(calls).toEqual([]);
     expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0 });
     plugin.settings.syncExclude = true;
     await plugin.saveSettings();
     pending.splice(0).forEach((cb) => cb());
-    expect(calls.at(-1)).toEqual(["user/own", "repo-empty", "repo-notes/node_modules"]);
-    expect(plugin.settings.syncManaged).toEqual(["repo-empty", "repo-notes/node_modules"]);
+    // repo-empty ist nur „leer“ und wandert deshalb NICHT in die Sync-Liste; node_modules (Muster) schon.
+    expect(calls.at(-1)).toEqual(["user/own", "repo-notes/node_modules"]);
+    expect(plugin.settings.syncManaged).toEqual(["repo-notes/node_modules"]);
     plugin.settings.syncExclude = false;
     await plugin.saveSettings();
     pending.splice(0).forEach((cb) => cb());
@@ -75,7 +78,7 @@ describe("ShadowTreePlugin", () => {
   it("reports sync as unavailable without the core plugin", async () => {
     const { plugin, pending } = setup();
     await plugin.onload();
-    expect(plugin.syncStatus()).toEqual({ kind: "pending" });
+    expect(plugin.syncStatus()).toEqual({ kind: "unavailable", reason: "no-plugin" });   // live gemessen, nicht gecacht
     pending.splice(0).forEach((cb) => cb());
     expect(plugin.syncStatus()).toEqual({ kind: "unavailable", reason: "no-plugin" });
   });

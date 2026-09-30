@@ -1,6 +1,6 @@
 {
   "source": "obsidian-kit",
-  "version": "0.45.1",
-  "sha": "325d3ff",
-  "vendored": "folder-suggest.ts, help-setting.ts, settings_walker.ts"
+  "version": "0.46.0",
+  "sha": "886bea5",
+  "vendored": "folder-suggest.ts, help-setting.ts, settings_walker.ts, folder-hide.ts"
 }

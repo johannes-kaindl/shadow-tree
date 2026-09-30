@@ -1,7 +1,7 @@
 {
   "sources": {
     "obsidian-kit": {
-      "ref": "0.45.1"
+      "ref": "0.46.0"
     },
     "code-kit": {
       "ref": "0.8.0"
@@ -34,6 +34,20 @@
         "folder-suggest",
         "help-setting",
         "settings_walker"
+      ]
+    },
+    {
+      "dir": "src/vendor/kit-obsidian",
+      "source": "obsidian-kit",
+      "from": "src/obsidian",
+      "modules": [
+        "folder-hide"
+      ],
+      "rewrite": [
+        [
+          "../pure/",
+          "../kit/"
+        ]
       ]
     },
     {
