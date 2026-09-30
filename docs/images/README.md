@@ -6,7 +6,7 @@ The plugin has no view of its own: three images show Obsidian's file explorer in
 
 ## Status
 
-**2026-09-30: recording in progress** in a second Obsidian instance (own profile `/tmp/obs-test-shadow-tree`, port 9350, Obsidian 1.14.3, English interface, light theme) against the fixture vault in `../../fixtures/vault/` (the same fixture the GUI smoke uses; one fixture, one truth). Every image is looked at after recording.
+**2026-09-30: all four images recorded** in a second Obsidian instance (own profile `/tmp/obs-test-shadow-tree`, port 9350, Obsidian 1.14.3, English interface, dark theme following the system) against the fixture vault in `../../fixtures/vault/` (the same fixture the GUI smoke uses; one fixture, one truth). Every image is looked at after recording.
 
 ## Images
 
@@ -19,8 +19,9 @@ The plugin has no view of its own: three images show Obsidian's file explorer in
 
 ## Fixture and recipe
 
-- Fixture: `fixtures/vault/notes/` (three example repositories, generic English content) and `fixtures/vault/obsidian/` (only this plugin enabled, light theme).
+- Fixture: `fixtures/vault/notes/` (three example repositories, generic English content) and `fixtures/vault/obsidian/` (only this plugin enabled; the theme follows the system, the images were taken in dark mode).
 - The plugin's own data is the **delivery state**: no pins, default patterns. The recipe toggles the reveal switch for `revealed.png` and switches it back.
+- `context-menu.png`: on macOS Obsidian draws context menus as **native** menus, which no screenshot can capture. The recipe listens to `file-menu`, sets `useNativeMenu = false` for that one menu and opens it through the explorer's own method; the entries and their order are the real ones, only drawn as HTML.
 
 ```bash
 npm run build && npm run shots -- --setup        # build the vault from the fixture

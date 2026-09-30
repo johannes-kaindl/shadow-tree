@@ -121,11 +121,19 @@ async function main(): Promise<void> {
     }
 
     if (want("context-menu")) {
+      // Obsidian zeigt Kontextmenüs auf macOS als NATIVE Menüs (`menu.useNativeMenu`, gemessen 2026-09-30): weder ein
+      // synthetisches Event noch ein echter Rechtsklick per CDP bringen ein `.menu` ins DOM, und ein natives Menü ist
+      // für einen Screenshot unerreichbar. Das Rezept hört deshalb auf `file-menu` (dort hängt Shadow Tree ohnehin
+      // seine Einträge an), schaltet das Menü für diese eine Anzeige auf HTML um und öffnet es über denselben internen
+      // Weg wie der Explorer. Dieselben Einträge in derselben Reihenfolge, nur als HTML gezeichnet.
       await ws.evaluate(`
+        const v = app.workspace.getLeavesOfType("file-explorer")[0].view;
         const el = document.querySelector('.nav-folder-title[data-path="repo-notes/docs"]');
         const r = el.getBoundingClientRect();
-        el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 60, clientY: r.top + r.height / 2, button: 2 }));
-        await new Promise((res) => setTimeout(res, 700));
+        const off = app.workspace.on("file-menu", (menu) => { menu.useNativeMenu = false; });
+        v.openFileContextMenu(new MouseEvent("contextmenu", { clientX: r.left + 60, clientY: r.top + r.height / 2, bubbles: true, cancelable: true }), el);
+        await new Promise((res) => setTimeout(res, 800));
+        app.workspace.offref(off);
         return true;
       `);
       const box = await ws.evaluate<string>(`
@@ -136,7 +144,9 @@ async function main(): Promise<void> {
       `);
       const b = JSON.parse(box) as { found: boolean; items: string[]; right: number; bottom: number };
       if (!b.found || b.items.length !== 2) throw new Error(`Kontextmenü nicht wie erwartet: ${box}`);
-      await aufnehmen(ws, "context-menu.png", { x: 0, y: 0, width: Math.min(WINDOW.width, b.right + 40), height: Math.min(WINDOW.height, b.bottom + 40) }, outDir);
+      // Breit genug für das Seitenverhältnis-Budget der Klasse feature (H/B ≤ 1.6): ein Stück der offenen Notiz kommt mit.
+      const cmBox = { x: 0, y: 40, width: Math.min(WINDOW.width, Math.max(b.right + 40, 660)), height: Math.min(WINDOW.height, b.bottom + 24) - 40 };
+      await aufnehmen(ws, "context-menu.png", cmBox, outDir);
       await ws.evaluate(`document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })); const m = document.querySelector(".menu"); if (m) m.remove(); return true;`);
     }
 
