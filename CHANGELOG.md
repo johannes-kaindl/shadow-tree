@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-10-03
+
 ### Changed
 
 - The troubleshooting guide ends with a “Getting help” section that links to the issue tracker.
