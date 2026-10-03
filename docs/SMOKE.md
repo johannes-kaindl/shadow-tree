@@ -16,7 +16,7 @@ Runs with `npm run smoke:gui -- --port 9350` against a second Obsidian instance 
 | F | creating a note in `repo-empty` reveals it, trashing the note hides it again | `vault.create` / `fileManager.trashFile`, display polled up to 5 s |
 | H | occlusion probe: `elementFromPoint` on the `repo-notes` title hits the title row | run before G so no settings window covers it |
 | G | settings tab: help row first, "Currently hidden" names 3 folders, the Sync status line shows one of its states | settings window attached via CDP |
-| G2 | Sync write path (`setIgnoreFolders`) | **not measured** in the fixture vault (no Sync account); acceptance happens in a vault with an active Sync account |
+| G2 | Sync write path (`setIgnoreFolders`) | **not measured** in the fixture vault (no Sync account); accepted by the maintainer on 2026-10-03 in a vault with an active Sync account (exclusion list correct in both directions) |
 
 The counter-probe disables the empty-folder rule in `src/core/evaluate.ts` (`if (false && rules.hideEmpty …)`), redeploys and restarts the second instance. Expected red: A, D, E (count 2 instead of 3), F, G; expected green: 0, B, B2, C, H.
 

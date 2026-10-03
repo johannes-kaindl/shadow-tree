@@ -4,7 +4,7 @@ Orientierung für KI-Agenten (Claude Code, Codex, …) und Mitwirkende an diesem
 
 **Profil:** `ts-node` · `obsidian-plugin`.
 
-**Stand 2026-09-30: 0.1.0 gebaut, noch nicht released.** Alle 14 Tasks des Plans umgesetzt: purer Kern (Muster-Matcher, Evaluator, Settings, Sync-Plan, Entpreller, ViewModel), Obsidian-Hülle (Snapshot, Hide-Sheet, Sync-Fassade, Kontextmenü, Settings-Tab), GUI-Smoke 10/11 (G2 Sync-Schreibpfad „nichts gemessen“, kein Sync-Konto im Staging-Vault). Spec und Plan liegen im Coding-Cockpit (`25_Coding/shadow-tree/_SDD/`, CORE-META-14). Für neue Vorhaben gilt: erst Kit-first-Sondierung (`../AGENTS.md` + `../REGISTRY.md`), dann `superpowers:brainstorming` → Spec → Plan → TDD.
+**Stand 2026-10-03: 0.1.0 released (2026-10-01), Store-Scan „Passed“, Sync-Ausschluss am echten Konto abgenommen.** Alle 14 Tasks des Plans umgesetzt: purer Kern (Muster-Matcher, Evaluator, Settings, Sync-Plan, Entpreller, ViewModel), Obsidian-Hülle (Snapshot, Hide-Sheet, Sync-Fassade, Kontextmenü, Settings-Tab), GUI-Smoke 10/11 (G2 Sync-Schreibpfad „nichts gemessen“, kein Sync-Konto im Staging-Vault). Spec und Plan liegen im Coding-Cockpit (`25_Coding/shadow-tree/_SDD/`, CORE-META-14). Für neue Vorhaben gilt: erst Kit-first-Sondierung (`../AGENTS.md` + `../REGISTRY.md`), dann `superpowers:brainstorming` → Spec → Plan → TDD.
 
 ## Project character
 
