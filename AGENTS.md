@@ -54,7 +54,7 @@ scripts/shots.ts                README-Bilder (Skill readme-shots), Vertrag docs
 - CSS-Präfix `sht-`, nur Theme-Variablen, kein `!important`, kein `:has()` (UI-STANDARD §3).
 - Zustands-Knopf (Ribbon) nach UI-STANDARD §8: Icon `eye-off` ↔ `eye`, Tooltip nennt den Ist-Zustand, `aria-pressed`.
 - Vendorte Dateien nie von Hand editieren; `eslint.overrides.mjs` klammert `src/vendor/**` aus.
-- Markdown-Dateien: ein Absatz je Zeile (Jays Regel seit 2026-09-19).
+- Markdown-Dateien: ein Absatz je Zeile (Johannes' Regel seit 2026-09-19).
 
 ## Gotchas
 

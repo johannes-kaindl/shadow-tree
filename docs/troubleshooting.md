@@ -54,3 +54,7 @@ The status line under the switch names the reason:
 ## Notes in hidden folders still appear in search
 
 **Cause:** the plugin only hides folders in the file explorer; search, quick switcher and graph are not filtered. **What to do:** use Obsidian's own **Settings → Files and links → Excluded files**.
+
+## Getting help
+
+If none of the above fits, open an issue at https://github.com/johannes-kaindl/shadow-tree/issues and include your Obsidian version and what you see.
