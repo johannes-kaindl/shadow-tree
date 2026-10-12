@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { evaluate, rulesFromSettings, type EvaluateRules } from "../src/core/evaluate";
 import type { FolderNode } from "../src/core/tree";
-import { parsePatterns } from "../src/core/ignore";
+import { parsePatterns } from "../src/vendor/kit/ignore";
 import { DEFAULT_SETTINGS } from "../src/core/settings";
 
 const f = (path: string, files: string[] = [], folders: FolderNode[] = []): FolderNode => ({ path, folders, fileExtensions: files });

@@ -22,7 +22,7 @@ Orientierung für KI-Agenten (Claude Code, Codex, …) und Mitwirkende an diesem
 
 ```
 src/core/tree.ts          FolderNode — purer Eingabebaum
-src/core/ignore.ts        parsePatterns / matchIgnore / normalizeFolderPath (.gitignore-Art, nur Ordner)
+src/vendor/kit/ignore.ts  parsePatterns / matchIgnore / normalizeFolderPath (.gitignore-Art, nur Ordner; code-kit, vendort)
 src/core/evaluate.ts      evaluate(tree, rules) → HiddenFolder[] (oberste Ordner mit Grund; Show-Pin schützt Vorfahren)
 src/core/settings.ts      ShadowTreeSettings, loadSettings (Feldreparatur), withPin/pinOf, parseExtensions
 src/core/sync-plan.ts     planSyncExclusions(current, managed, desired) — fremde Einträge bleiben

@@ -23,7 +23,8 @@
       "from": "src/ts/pure",
       "modules": [
         "settings",
-        "i18n"
+        "i18n",
+        "ignore"
       ]
     },
     {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchIgnore, normalizeFolderPath, parsePatterns } from "../src/core/ignore";
+import { matchIgnore, normalizeFolderPath, parsePatterns } from "../src/vendor/kit/ignore";
 
 const m = (text: string, path: string) => matchIgnore(parsePatterns(text).rules, path);
 

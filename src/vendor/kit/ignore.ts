@@ -1,27 +1,34 @@
-/** Ignore-Muster in .gitignore-Art, angewandt nur auf ORDNERpfade (Spec § 5).
+// vendored from code-kit@0.24.0, src/ts/pure/ignore.ts — do not hand-edit; re-vendor via tools/sync-kit.sh
+/** Ignore patterns in `.gitignore` style, applied to FOLDER paths only.
  *
- *  Syntax: eine Regel je Zeile; `#` Kommentar; `*` innerhalb eines Segments, `**` über Segmente,
- *  `?` ein Zeichen; ohne Slash trifft die Regel den Ordnernamen in jeder Tiefe, mit Slash den
- *  Pfad ab Vault-Root (führendes `/` optional); abschließendes `/` ohne Wirkung; `!` negiert,
- *  die letzte treffende Regel gewinnt. Ranges `[abc]` sind bewusst literal. */
+ *  Lifted from `shadow-tree/src/core/ignore.ts` (shadow-tree wave 14, spec § 5); the second
+ *  consumer is Ghostline. shadow-tree itself still carries its own copy — swapping it over is a
+ *  separate job. Pure on purpose: no file system, no vault, so a folder-hiding plugin and a
+ *  folder-tree plugin read the same rules the same way.
+ *
+ *  Syntax: one rule per line; `#` comment; `*` inside a segment, `**` across segments, `?` one
+ *  character; without a slash the rule matches the folder name at any depth, with a slash the
+ *  path from the vault root (leading `/` optional); a trailing `/` has no effect; `!` negates,
+ *  the last matching rule wins. Ranges `[abc]` are deliberately literal. */
 export interface IgnoreRule { source: string; negate: boolean; anchored: boolean; regex: RegExp; }
 export interface ParsedPatterns { rules: IgnoreRule[]; invalid: string[]; }
 
-/** Trimmen, doppelte Slashes zusammenziehen, Slashes am Rand entfernen; Root wird "". */
+/** Trim, collapse doubled slashes, strip slashes at the edges; the root becomes "". */
 export function normalizeFolderPath(raw: string): string {
   return raw.trim().replace(/\/{2,}/g, "/").replace(/^\/+/, "").replace(/\/+$/, "");
 }
 
 const META = /[.*+?^${}()|[\]\\]/g;
+const escape = (c: string): string => c.replace(META, "\\$&");
 
 function globToRegexSource(glob: string): string {
   let out = "";
   for (let i = 0; i < glob.length; i++) {
-    const c = glob[i];
+    const c = glob.charAt(i);
     if (c === "*") {
-      if (glob[i + 1] === "*") {
-        const atSegmentStart = i === 0 || glob[i - 1] === "/";
-        if (atSegmentStart && glob[i + 2] === "/") { out += "(?:.*/)?"; i += 2; continue; }
+      if (glob.charAt(i + 1) === "*") {
+        const atSegmentStart = i === 0 || glob.charAt(i - 1) === "/";
+        if (atSegmentStart && glob.charAt(i + 2) === "/") { out += "(?:.*/)?"; i += 2; continue; }
         if (atSegmentStart && i + 2 === glob.length) { out += ".*"; i += 1; continue; }
         out += "[^/]*"; i += 1; continue;
       }
@@ -29,9 +36,9 @@ function globToRegexSource(glob: string): string {
     } else if (c === "?") {
       out += "[^/]";
     } else if (c === "\\" && i + 1 < glob.length) {
-      out += glob[i + 1].replace(META, "\\$&"); i += 1;
+      out += escape(glob.charAt(i + 1)); i += 1;
     } else {
-      out += c.replace(META, "\\$&");
+      out += escape(c);
     }
   }
   return out;
@@ -52,14 +59,14 @@ export function parsePatterns(text: string): ParsedPatterns {
     body = body.replace(/^\/+/, "");
     if (body === "" || body === "**") { invalid.push(line); continue; }
     const src = globToRegexSource(body);
-    // "docs/**" trifft docs selbst und alles darunter: der Rest hinter dem letzten Slash wird optional.
+    // "docs/**" matches docs itself and everything below: the part after the last slash becomes optional.
     const withOptionalTail = src.endsWith("/.*") ? `${src.slice(0, -3)}(?:/.*)?` : src;
     rules.push({ source: line, negate, anchored, regex: new RegExp(`^${withOptionalTail}$`) });
   }
   return { rules, invalid };
 }
 
-/** Quelle der letzten treffenden Regel oder null. Der Root ("" bzw. "/") trifft nie. */
+/** Source of the last matching rule, or null. The root ("" or "/") never matches. */
 export function matchIgnore(rules: readonly IgnoreRule[], folderPath: string): string | null {
   const path = normalizeFolderPath(folderPath);
   if (path === "") return null;

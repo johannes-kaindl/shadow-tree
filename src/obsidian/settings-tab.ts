@@ -6,7 +6,7 @@ import { githubHelpUrls, helpSettingDefinition, type HelpSettingOptions } from "
 import { FolderSuggest } from "../vendor/kit-obsidian/folder-suggest";
 import { hiddenView } from "../core/hidden-view";
 import { tn } from "../i18n/strings";
-import { normalizeFolderPath } from "../core/ignore";
+import { normalizeFolderPath } from "../vendor/kit/ignore";
 import { withPin, type PinState } from "../core/settings";
 
 /** Doku-Index und Issues auf GitHub (Repo-Name); `open` nur für Tests. */

@@ -1,5 +1,5 @@
 import { mergeSettings } from "../vendor/kit/settings";
-import { normalizeFolderPath } from "./ignore";
+import { normalizeFolderPath } from "../vendor/kit/ignore";
 
 export type PinState = "show" | "hide";
 

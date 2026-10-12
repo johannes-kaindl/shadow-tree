@@ -5,5 +5,5 @@
   "vendored": "folder-hide.ts, vault-path.ts",
   "code_kit_version": "0.24.0",
   "code_kit_sha": "c3117a3",
-  "code_kit_vendored": "settings.ts, i18n.ts"
+  "code_kit_vendored": "settings.ts, i18n.ts, ignore.ts"
 }

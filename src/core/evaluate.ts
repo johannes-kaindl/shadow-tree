@@ -1,4 +1,4 @@
-import { matchIgnore, parsePatterns, type IgnoreRule } from "./ignore";
+import { matchIgnore, parsePatterns, type IgnoreRule } from "../vendor/kit/ignore";
 import { parseExtensions, type PinState, type ShadowTreeSettings } from "./settings";
 import type { FolderNode } from "./tree";
 
