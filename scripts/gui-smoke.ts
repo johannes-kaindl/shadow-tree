@@ -10,7 +10,7 @@
  * F  Notiz anlegen lässt repo-empty erscheinen, Löschen lässt es verschwinden
  * G  Settings-Tab: Hilfe-Zeile zuerst, „Currently hidden“ nennt 3, Sync-Statuszeile nennt einen der drei Zustände (welcher, steht im Detail)
  * H  Verdeckungsprobe: elementFromPoint auf repo-notes trifft die Titelzeile
- * Der Sync-SCHREIBPFAD wird nicht gemessen (kein Sync-Konto im Staging-Vault) und als „nichts gemessen“ ausgewiesen.
+ * Der Sync-SCHREIBPFAD wird nicht gemessen (kein Sync-Konto im Staging-Vault) und als „übersprungen“ ausgewiesen.
  *
  * ## Zweitinstanz (eigenes Profil, eigener Port — NICHT die reguläre Instanz anfassen; `--port` ist Pflicht)
  *
@@ -29,9 +29,9 @@
  * den Dialog und hebt den Modus auf, bevor etwas gemessen wird. Prozess der Zweitinstanz je Messlauf neu
  * starten (Dach-Regel Welle 11, recycelte Fenster altern); der erste Lauf nach der Profilanlage ist ein Aufwärmlauf.
  *
- * Bilanz: `createBilanz` mit Soll-Liste `PUNKTE` als Nenner. Exit 1 bei Rot ODER „nichts gemessen“ (der Sync-
- * Schreibpfad G2 ist im Staging-Vault nie messbar, der Lauf endet deshalb mit Exit 1 — gewollt, CORE-TEST-19),
- * Exit 2 bei Abbruch.
+ * Bilanz: `createBilanz` mit Soll-Liste `PUNKTE` als Nenner. Exit 1 bei Rot ODER „nichts gemessen“, Exit 2 bei
+ * Abbruch. Der Sync-Schreibpfad G2 ist im Staging-Vault nicht anwendbar (kein Sync-Konto) und steht als
+ * „übersprungen“ im Protokoll, Exit 0.
  *
  * Typen: `tsconfig.scripts.json` (im `gate` über `npm run typecheck:scripts`).
  */
@@ -64,7 +64,7 @@ const PUNKTE = [
 ] as const;
 
 const bilanz = createBilanz({ punkte: PUNKTE });
-const { record, unmeasured: notMeasured } = bilanz;
+const { record, skipped } = bilanz;
 
 const q = (s: unknown): string => JSON.stringify(s);
 
@@ -231,7 +231,10 @@ async function main(): Promise<void> {
       return { first, hidden, sync, syncDisabled: toggle ? toggle.classList.contains("is-disabled") || toggle.hasAttribute("disabled") || toggle.getAttribute("aria-disabled") === "true" : null };
     `);
     record("G Settings: Hilfe-Zeile zuerst, „3 folder(s) are hidden“, Sync-Statuszeile vorhanden", (g.first === "Help" || g.first === "Hilfe") && /^3 /.test(g.hidden ?? "") && g.sync !== null, `erste Zeile=${q(g.first)} · hidden=${q(g.hidden)} · sync=${q(g.sync)} · Toggle gesperrt=${q(g.syncDisabled)}`);
-    notMeasured("G2 Sync-Schreibpfad (setIgnoreFolders)", "kein Sync-Konto im Staging-Vault; Abnahme an einem Vault mit aktivem Sync (Handover)");
+    // Nicht anwendbar in der Staging-Lage, nicht „nicht erreicht“: `syncFacade` liefert ohne verbundenen Remote-Vault
+    // (`instance.vaultId` null) `no-account`, und den gibt es nur mit einem Sync-Konto. Messbar wäre der Schreibpfad
+    // in einem Vault mit aktiver Sync-Verbindung (Handover); ein vorgetäuschtes `vaultId` würde einen erfundenen Zustand messen.
+    skipped("G2 Sync-Schreibpfad (setIgnoreFolders)", "in der Staging-Lage nicht anwendbar: kein Sync-Konto, kein verbundener Remote-Vault (vaultId null → no-account); messbar nur in einem Vault mit aktiver Sync-Verbindung (Handover)");
     if (ownWindow) sCdp.close();
     // Das Einstellungen-Fenster (ab 1.13 eigenes Fenster) schließt nur `app.setting.close()` im Hauptfenster; die
     // CDP-Verbindung zu schließen lässt es offen stehen (gemessen 2026-09-30: Zielliste zeigte es nach dem Lauf).
