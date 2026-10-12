@@ -11,7 +11,6 @@
  * Der Treiber ändert keine Plugin-Daten: Auslieferungszustand (keine Pins, Standard-Muster). Für
  * `revealed.png` schaltet er den Sitzungsschalter um und danach zurück.
  */
-import { execFileSync } from "node:child_process";
 import { argv, cwd, exit } from "node:process";
 
 import { Cdp, attachTo, openExisting, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
@@ -90,10 +89,6 @@ async function main(): Promise<void> {
   let settingsWin: Cdp | null = null;
   let revealed = false;
   try {
-    if (process.platform === "darwin") {
-      try { execFileSync("osascript", ["-e", 'tell application "Obsidian" to activate']); await new Promise((r) => setTimeout(r, 1200)); }
-      catch { console.log("  (Hinweis: osascript activate schlug fehl)"); }
-    }
     await requireVisible(ws);
     const sprache = await ws.evaluate<{ lang: string }>(`return { lang: window.moment ? window.moment.locale() : "?" };`);
     if (!sprache.lang.startsWith("en")) throw new Error(`Oberfläche ist „${sprache.lang}“, nicht Englisch — obsidian.json UND localStorage["language"] auf "en", dann Neustart.`);

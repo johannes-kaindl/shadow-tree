@@ -35,7 +35,6 @@
  *
  * Typen: `tsconfig.scripts.json` (im `gate` über `npm run typecheck:scripts`).
  */
-import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { cwd } from "node:process";
 
@@ -119,10 +118,6 @@ async function main(): Promise<void> {
   let pinnedForTest = false;
   let createdNote = false;
   try {
-    if (process.platform === "darwin") {
-      try { execFileSync("osascript", ["-e", 'tell application "Obsidian" to activate']); await new Promise((r) => setTimeout(r, 1500)); }
-      catch { console.log("  (Hinweis: osascript activate schlug fehl — Fenster ggf. von Hand nach vorn holen)"); }
-    }
     await requireVisible(cdp);
 
     // Vertrauensdialog und Restricted Mode eines frischen Profils (Dach-AGENTS § Staging-Vaults (b)/(c)).
