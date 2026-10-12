@@ -1,11 +1,11 @@
 /**
  * Aufnahme-Treiber für `docs/images/` — fährt den Vertrag aus `docs/images/README.md` gegen ein
- * **laufendes** Obsidian (Skill `readme-shots`), Zweitinstanz mit eigenem Profil und Port 9350.
+ * **laufendes** Obsidian (Skill `readme-shots`), Zweitinstanz mit eigenem Profil und eigenem Port (--port ist Pflicht).
  *
  * ```bash
  * npm run build && npm run shots -- --setup            # Vault aus dem Fixture bauen (dasselbe wie der GUI-Smoke)
  * # Zweitinstanz mit Vault + englischer Oberfläche starten (obsidian.json UND localStorage["language"] = "en")
- * npm run shots -- --port 9350 [--only hero|revealed|settings|context-menu]
+ * npm run shots -- --port 9390 [--only hero|revealed|settings|context-menu]
  * ```
  *
  * Der Treiber ändert keine Plugin-Daten: Auslieferungszustand (keine Pins, Standard-Muster). Für
@@ -71,14 +71,16 @@ function setup(): void {
   const log = buildVault({ repoRoot: cwd(), vaultDir, fixtureDir: "fixtures/vault", pluginId: PLUGIN_ID });
   console.log(`Vault: ${vaultDir}`);
   for (const zeile of log) console.log(" ·", zeile);
-  console.log("\nZweitinstanz mit diesem Vault UND englischer Oberfläche starten, dann:\n  npm run shots -- --port 9350");
+  console.log("\nZweitinstanz mit diesem Vault UND englischer Oberfläche starten, dann:\n  npm run shots -- --port 9390");
 }
 
 async function main(): Promise<void> {
   const args = argv.slice(2);
   const flag = (name: string): string | undefined => { const i = args.indexOf(`--${name}`); return i === -1 ? undefined : args[i + 1]; };
   if (args.includes("--setup")) { setup(); return; }
-  const port = Number(flag("port") ?? 9350);
+  // Kein Standardport: die reguläre Instanz (9222) gehört anderen Sessions.
+  const port = Number(flag("port"));
+  if (!Number.isInteger(port)) throw new Error("--port <Port> ist Pflicht (Zweitinstanz, z. B. --port 9390) — kein Standardport.");
   const only = flag("only");
   const outDir = flag("out") ?? "docs/images";
   const want = (n: string): boolean => only === undefined || only === n;

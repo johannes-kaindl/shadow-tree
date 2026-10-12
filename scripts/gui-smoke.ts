@@ -12,22 +12,26 @@
  * H  Verdeckungsprobe: elementFromPoint auf repo-notes trifft die Titelzeile
  * Der Sync-SCHREIBPFAD wird nicht gemessen (kein Sync-Konto im Staging-Vault) und als „nichts gemessen“ ausgewiesen.
  *
- * ## Zweitinstanz (eigenes Profil, eigener Port 9350 — NICHT die reguläre Instanz anfassen)
+ * ## Zweitinstanz (eigenes Profil, eigener Port — NICHT die reguläre Instanz anfassen; `--port` ist Pflicht)
  *
  *   echo "$STAGING_VAULTS_DIR"                                         # muss gesetzt sein
  *   npm run build && npm run smoke:gui -- --setup
  *   UD=/tmp/obs-test-shadow-tree; mkdir -p "$UD"
- *   lsof -nP -iTCP:9350 -sTCP:LISTEN && echo "Port belegt — anderen nehmen"
+ *   lsof -nP -iTCP:9390 -sTCP:LISTEN && echo "Port belegt — anderen nehmen"
  *   node -e 'const p=process.env.STAGING_VAULTS_DIR+"/shadow-tree";require("fs").writeFileSync(process.argv[1]+"/obsidian.json",JSON.stringify({vaults:{"shadow-tree":{path:p,ts:Date.now(),open:true}},language:"en"}))' "$UD"
- *   cp ~/Library/Application\ Support/obsidian/obsidian-1.14.3.asar "$UD"/   # aktuelle Version statt gebündelter
- *   /Applications/Obsidian.app/Contents/MacOS/Obsidian --user-data-dir="$UD" --remote-debugging-port=9350 &
- *   python3 ~/.claude/hooks/obsidian-cdp-lock.py acquire --label shadow-tree --intent "GUI-Smoke" --exclusive focus --port 9350 --ttl 900
- *   npm run smoke:gui -- --port 9350
- *   python3 ~/.claude/hooks/obsidian-cdp-lock.py release --port 9350
+ *   cp ~/Library/Application\ Support/obsidian/obsidian-*.asar "$UD"/   # aktuelle Version statt gebündelter
+ *   /Applications/Obsidian.app/Contents/MacOS/Obsidian --user-data-dir="$UD" --remote-debugging-port=9390 &
+ *   python3 ~/.claude/hooks/obsidian-cdp-lock.py acquire --label shadow-tree --intent "GUI-Smoke" --exclusive focus --port 9390 --ttl 900
+ *   npm run smoke:gui -- --port 9390
+ *   python3 ~/.claude/hooks/obsidian-cdp-lock.py release --port 9390
  *
- * Ein frisches Profil fragt „Trust author?“ und startet im Restricted Mode — der Treiber klickt den
- * Vertrauens-Knopf und schaltet per `app.plugins.setEnable(true)` frei, bevor etwas gemessen wird.
- * Prozess der Zweitinstanz je Messlauf neu starten (Dach-Regel Welle 11, recycelte Fenster altern).
+ * Ein frisches Profil fragt „Trust author?“ und startet im Restricted Mode — `bereiteInstanzVor` bestätigt
+ * den Dialog und hebt den Modus auf, bevor etwas gemessen wird. Prozess der Zweitinstanz je Messlauf neu
+ * starten (Dach-Regel Welle 11, recycelte Fenster altern); der erste Lauf nach der Profilanlage ist ein Aufwärmlauf.
+ *
+ * Bilanz: `createBilanz` mit Soll-Liste `PUNKTE` als Nenner. Exit 1 bei Rot ODER „nichts gemessen“ (der Sync-
+ * Schreibpfad G2 ist im Staging-Vault nie messbar, der Lauf endet deshalb mit Exit 1 — gewollt, CORE-TEST-19),
+ * Exit 2 bei Abbruch.
  *
  * Typen: `tsconfig.scripts.json` (im `gate` über `npm run typecheck:scripts`).
  */
@@ -35,7 +39,8 @@ import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { cwd } from "node:process";
 
-import { Cdp, attachTo, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
+import { createBilanz, parseArgs, runDriver } from "../../tools/obsidian-cdp/bilanz.js";
+import { Cdp, attachTo, bereiteInstanzVor, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
 import { buildVault, requireEigenerBuild, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
 
 const REPO_NAME = "shadow-tree";
@@ -43,17 +48,23 @@ const PLUGIN_ID = "shadow-tree";
 const REPO_ROOT = cwd();
 const FIXTURE_DIR = join(REPO_ROOT, "fixtures/vault");
 
-type Zustand = "gruen" | "rot" | "uebersprungen" | "nichts-gemessen";
-interface Check { name: string; zustand: Zustand; detail: string }
-const checks: Check[] = [];
-function record(name: string, passed: boolean, detail: string): void {
-  checks.push({ name, zustand: passed ? "gruen" : "rot", detail });
-  console.log(`${passed ? "  ✓" : "  ✗"} ${name} — ${detail}`);
-}
-function notMeasured(name: string, reason: string): void {
-  checks.push({ name, zustand: "nichts-gemessen", detail: reason });
-  console.log(`  ∅ ${name} — nichts gemessen: ${reason}`);
-}
+/** Soll-Liste aller Prüfpunkte — der Nenner der Bilanz (CORE-TEST-19). */
+const PUNKTE = [
+  "0 Plugin geladen (Restricted-Mode-Guard)",
+  "A repo-empty ausgeblendet (display none)",
+  "B node_modules ausgeblendet trotz README, repo-notes und docs sichtbar",
+  "B2 repo-notes/dist ausgeblendet (Standard-Muster dist; die Leere-Regel misst A)",
+  "C repo-deep bis a/b/c sichtbar",
+  "D Pin „immer anzeigen“ zeigt repo-empty, Pin weg blendet wieder aus",
+  "E Umschalter: alles sichtbar, Ribbon nennt Zustand, zurück ausgeblendet",
+  "F Notiz anlegen zeigt repo-empty, Löschen blendet wieder aus",
+  "H elementFromPoint auf repo-notes trifft die Titelzeile",
+  "G Settings: Hilfe-Zeile zuerst, „3 folder(s) are hidden“, Sync-Statuszeile vorhanden",
+  "G2 Sync-Schreibpfad (setIgnoreFolders)",
+] as const;
+
+const bilanz = createBilanz({ punkte: PUNKTE });
+const { record, unmeasured: notMeasured } = bilanz;
 
 const q = (s: unknown): string => JSON.stringify(s);
 
@@ -89,14 +100,16 @@ function setup(): void {
   const log = buildVault({ repoRoot: REPO_ROOT, vaultDir, fixtureDir: FIXTURE_DIR, pluginId: PLUGIN_ID });
   console.log(`Staging-Vault gebaut: ${vaultDir}`);
   for (const l of log) console.log(`  · ${l}`);
-  console.log("\nZweitinstanz starten (Rezept im Dateikopf), dann:\n  npm run smoke:gui -- --port 9350");
+  console.log("\nZweitinstanz starten (Rezept im Dateikopf), dann:\n  npm run smoke:gui -- --port <Port>");
 }
 
 async function main(): Promise<void> {
-  const argv = process.argv.slice(2);
-  if (argv.includes("--setup")) { setup(); return; }
-  const flag = (name: string): string | undefined => { const i = argv.indexOf(`--${name}`); return i === -1 ? undefined : argv[i + 1]; };
-  const port = Number(flag("port") ?? 9350);
+  const args = parseArgs(process.argv.slice(2));
+  if (args.has("setup")) { setup(); return; }
+  // Kein Standardport: die reguläre Instanz (9222) gehört anderen Sessions.
+  const portArg = args.value("port");
+  if (!portArg || !Number.isInteger(Number(portArg))) throw new Error("--port <Port> ist Pflicht (Zweitinstanz, z. B. --port 9390) — kein Standardport.");
+  const port = Number(portArg);
 
   console.log(`GUI-Smoke shadow-tree — Obsidian auf Port ${port}`);
   const cdp = await attachTo("workspace", port, REPO_NAME);
@@ -112,13 +125,9 @@ async function main(): Promise<void> {
     }
     await requireVisible(cdp);
 
-    // Vertrauensdialog eines frischen Profils (Dach-AGENTS § Staging-Vaults (c)).
-    const trusted = await cdp.evaluate<{ clicked: boolean }>(`
-      const btn = Array.from(document.querySelectorAll(".modal-container button")).find((b) => /trust/i.test(b.textContent || ""));
-      if (btn) { btn.click(); await new Promise((r) => setTimeout(r, 800)); return { clicked: true }; }
-      return { clicked: false };
-    `);
-    if (trusted.clicked) console.log("  (Vertrauensdialog bestätigt)");
+    // Vertrauensdialog und Restricted Mode eines frischen Profils (Dach-AGENTS § Staging-Vaults (b)/(c)).
+    const klar = await bereiteInstanzVor(cdp, { pluginIds: [PLUGIN_ID], nurVault: REPO_NAME, sprache: "en" });
+    console.log(`  (${klar.hinweis})`);
 
     const vaultInfo = await cdp.evaluate<{ name: string; basePath: string; configDir: string }>(`
       return window.app ? { name: app.vault.getName(), basePath: app.vault.adapter.basePath, configDir: app.vault.configDir } : { name: "", basePath: "", configDir: "" };
@@ -131,16 +140,8 @@ async function main(): Promise<void> {
     // Restricted-Mode-Guard + frischer Reload des Bundles.
     console.log("0 · Grundlage");
     await cdp.evaluate(`try { await app.plugins.disablePlugin(${q(PLUGIN_ID)}); await app.plugins.enablePlugin(${q(PLUGIN_ID)}); } catch {} return true;`);
-    let geladen = (await cdp.evaluate<{ g: boolean }>(`return { g: Boolean(app.plugins.plugins[${q(PLUGIN_ID)}]) };`)).g;
-    let frei = "";
-    if (!geladen) {
-      frei = (await cdp.evaluate<{ s: string }>(`
-        try { if (app.plugins.setEnable) await app.plugins.setEnable(true); await app.plugins.enablePluginAndSave(${q(PLUGIN_ID)}); await new Promise((r) => setTimeout(r, 1200));
-          return { s: app.plugins.plugins[${q(PLUGIN_ID)}] ? "freigeschaltet" : "Aufruf ohne Wirkung" }; } catch (e) { return { s: "Fehler: " + (e && e.message ? e.message : String(e)) }; }
-      `)).s;
-      geladen = (await cdp.evaluate<{ g: boolean }>(`return { g: Boolean(app.plugins.plugins[${q(PLUGIN_ID)}]) };`)).g;
-    }
-    record("0 Plugin geladen (Restricted-Mode-Guard)", geladen, geladen ? `Vault ${vaultInfo.name}${frei ? ` (${frei})` : " (bereits aktiv)"}` : `app.plugins.plugins.${PLUGIN_ID} fehlt — ${frei || "kein Freischaltversuch"}`);
+    const geladen = (await cdp.evaluate<{ g: boolean }>(`return { g: Boolean(app.plugins.plugins[${q(PLUGIN_ID)}]) };`)).g;
+    record("0 Plugin geladen (Restricted-Mode-Guard)", geladen, geladen ? `Vault ${vaultInfo.name} (${klar.hinweis})` : `app.plugins.plugins.${PLUGIN_ID} fehlt — ${klar.hinweis}`);
     if (!geladen) throw new Error("Ohne geladenes Plugin ist jeder weitere Punkt gegenstandslos.");
 
     // Auslieferungszustand sicherstellen (ein abgebrochener Vorlauf könnte Pins hinterlassen haben).
@@ -250,10 +251,8 @@ async function main(): Promise<void> {
     cdp.close();
   }
 
-  const n = (z: Zustand) => checks.filter((c) => c.zustand === z).length;
-  console.log(`\nBilanz: ${n("gruen")} grün · ${n("rot")} rot · ${n("uebersprungen")} übersprungen · ${n("nichts-gemessen")} nichts gemessen · Nenner ${checks.length}`);
   for (const w of warnungen) console.log(`  ⚠ ${w}`);
-  if (n("rot") > 0) process.exitCode = 1;
+  bilanz.abschluss();
 }
 
-main().catch((e: unknown) => { console.error(e instanceof Error ? e.message : String(e)); process.exitCode = 2; });
+runDriver(main);
