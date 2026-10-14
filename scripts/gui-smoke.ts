@@ -39,7 +39,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 
 import { createBilanz, parseArgs, runDriver } from "../../tools/obsidian-cdp/bilanz.js";
-import { Cdp, attachTo, bereiteInstanzVor, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
+import { Cdp, attachTo, beimAbbruch, bereiteInstanzVor, istAbgebrochen, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
 import { buildVault, requireEigenerBuild, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
 
 const REPO_NAME = "shadow-tree";
@@ -117,6 +117,19 @@ async function main(): Promise<void> {
   const warnungen: string[] = [];
   let pinnedForTest = false;
   let createdNote = false;
+  // Idempotent, im Abbruch ohne Warten. Vor der ersten Mutation angemeldet (Pin, Reveal, Notiz, Einstellungsfenster).
+  const zustandZurueck = async (): Promise<void> => {
+    try {
+      await cdp.evaluate(`
+        const p = app.plugins.plugins[${q(PLUGIN_ID)}];
+        if (p) { if (${pinnedForTest}) await p.setPin("repo-empty", null); if (p.revealed) p.toggleReveal(); }
+        if (${createdNote}) { const f = app.vault.getAbstractFileByPath("repo-empty/smoke-note.md"); if (f) await app.fileManager.trashFile(f); }
+        if (app.setting && typeof app.setting.close === "function") app.setting.close();
+        return true;
+      `);
+    } catch { console.log("  ! Aufräumen im Renderer fehlgeschlagen — Pins/Notiz im Staging-Vault von Hand prüfen"); }
+  };
+  const zustand = beimAbbruch(zustandZurueck, "Pin, Reveal, Test-Notiz und Einstellungsfenster zurücksetzen");
   try {
     await requireVisible(cdp);
 
@@ -168,8 +181,8 @@ async function main(): Promise<void> {
 
     // --- D ---------------------------------------------------------------------
     console.log("\nD · Pin");
+    pinnedForTest = true; // vor der Mutation (Abbruch dazwischen räumt; setPin(null) auf nicht gepinnt ist folgenlos)
     await cdp.evaluate(`await app.plugins.plugins[${q(PLUGIN_ID)}].setPin("repo-empty", "show"); return true;`);
-    pinnedForTest = true;
     const dPin = await waitDisplay(cdp, "repo-empty", (d) => d !== "none");
     await cdp.evaluate(`await app.plugins.plugins[${q(PLUGIN_ID)}].setPin("repo-empty", null); return true;`);
     pinnedForTest = false;
@@ -191,8 +204,8 @@ async function main(): Promise<void> {
 
     // --- F ---------------------------------------------------------------------
     console.log("\nF · Dynamik");
+    createdNote = true; // vor der Mutation: ein Abbruch dazwischen räumt (der Schritt prüft, ob die Notiz existiert)
     await cdp.evaluate(`await app.vault.create("repo-empty/smoke-note.md", "# smoke"); return true;`);
-    createdNote = true;
     const dNew = await waitDisplay(cdp, "repo-empty", (d) => d !== "none", 5000);
     await cdp.evaluate(`const f = app.vault.getAbstractFileByPath("repo-empty/smoke-note.md"); if (f) await app.fileManager.trashFile(f); return true;`);
     createdNote = false;
@@ -237,15 +250,9 @@ async function main(): Promise<void> {
     await pollUntil<{ ok: boolean }>(cdp, `return document.querySelector(".modal-container") ? null : { ok: true };`, 4000, 200);
 
   } finally {
-    // Aufräumen auf den Vorwert — auch nach Abbruch.
-    try {
-      await cdp.evaluate(`
-        const p = app.plugins.plugins[${q(PLUGIN_ID)}];
-        if (p) { if (${pinnedForTest}) await p.setPin("repo-empty", null); if (p.revealed) p.toggleReveal(); }
-        if (${createdNote}) { const f = app.vault.getAbstractFileByPath("repo-empty/smoke-note.md"); if (f) await app.fileManager.trashFile(f); }
-        return true;
-      `);
-    } catch { console.log("  ! Aufräumen im Renderer fehlgeschlagen — Pins/Notiz im Staging-Vault von Hand prüfen"); }
+    // Aufräumen auf den Vorwert — im Normalweg über `schliesse()`, nach Ctrl-C ruft das Abbruch-Modul den Schritt.
+    await zustand.schliesse();
+    if (istAbgebrochen()) return;
     cdp.close();
   }
 

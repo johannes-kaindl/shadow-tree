@@ -13,7 +13,7 @@
  */
 import { argv, cwd, exit } from "node:process";
 
-import { Cdp, attachTo, openExisting, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
+import { Cdp, attachTo, openExisting, requireUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
 import { capture, setWindowSize, writeShot, type Rect } from "../../tools/obsidian-cdp/shot.js";
 import { buildVault, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
 
@@ -102,14 +102,14 @@ async function main(): Promise<void> {
     await openExisting(ws, "repo-notes/docs/guide.md", "preview");
     await new Promise((r) => setTimeout(r, 800));
     await expandAll(ws);
-    await pollUntil<string>(ws, `return document.querySelector('.nav-folder-title[data-path="repo-deep/a/b/c"]') ? "ok" : null;`, 8000, 250);
+    await requireUntil(ws, `document.querySelector('.nav-folder-title[data-path="repo-deep/a/b/c"]')`, "Der Ordner repo-deep/a/b/c steht nicht im Explorer", 8000, 250);
 
     if (want("hero")) await aufnehmen(ws, "hero.png", await explorerBox(ws), outDir);
 
     if (want("revealed")) {
       await ws.evaluate(`app.plugins.plugins[${q(PLUGIN_ID)}].toggleReveal(); return true;`);
       revealed = true;
-      await pollUntil<string>(ws, `const el = document.querySelector('.nav-folder-title[data-path="repo-empty"]'); return el && getComputedStyle(el).display !== "none" ? "ok" : null;`, 5000, 200);
+      await requireUntil(ws, `(() => { const el = document.querySelector('.nav-folder-title[data-path="repo-empty"]'); return el && getComputedStyle(el).display !== "none"; })()`, "repo-empty bleibt im Explorer ausgeblendet", 5000, 200);
       await expandAll(ws);
       await aufnehmen(ws, "revealed.png", await explorerBox(ws), outDir);
       await ws.evaluate(`app.plugins.plugins[${q(PLUGIN_ID)}].toggleReveal(); return true;`);
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
     if (want("settings")) {
       settingsWin = await openSettings(ws, port);
       await setWindowSize(settingsWin, SETTINGS_WINDOW.width, SETTINGS_WINDOW.height);
-      await pollUntil<string>(settingsWin, `return document.querySelector(".sht-hidden-list") ? "ok" : null;`, 10_000, 250);
+      await requireUntil(settingsWin, `document.querySelector(".sht-hidden-list")`, "Die Einstellungen zeigen .sht-hidden-list nicht", 10_000, 250);
       const raw = await settingsWin.evaluate<string>(`
         const sc = document.querySelector(".vertical-tab-content"); sc.scrollTop = 0;
         await new Promise((r) => setTimeout(r, 300));
