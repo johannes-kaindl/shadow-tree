@@ -1,6 +1,6 @@
 {
   "name": "shadow-tree",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hides empty and irrelevant folders from the file explorer without deleting them: ignore patterns, per-folder pins, optional Sync exclusion.",
   "type": "module",
   "scripts": {

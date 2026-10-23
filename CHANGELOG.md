@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.2] — 2026-10-23
+
 ### Fixed
 
 - The Sync status line no longer reports folders as excluded that Obsidian Sync did not keep: after each write the plugin reads Sync's exclusion list back, counts only what arrived and warns when Sync kept fewer.
