@@ -62,7 +62,7 @@ describe("ShadowTreePlugin", () => {
     expect(plugin.syncStatus()).toEqual({ kind: "pending" });
     pending.splice(0).forEach((cb) => cb());          // Sync-Entpreller feuern (Opt-in aus)
     expect(calls).toEqual([]);
-    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0 });
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0, total: 1 });
     plugin.settings.syncExclude = true;
     await plugin.saveSettings();
     pending.splice(0).forEach((cb) => cb());
@@ -73,7 +73,62 @@ describe("ShadowTreePlugin", () => {
     await plugin.saveSettings();
     pending.splice(0).forEach((cb) => cb());
     expect(calls.at(-1)).toEqual(["user/own"]);
-    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0 });
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0, total: 1 });
+  });
+  it("reports the size of Sync's whole list next to its own share", async () => {
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["u/1", "u/2"] }, setIgnoreFolders(p: string[]) { instance.filter.ignoreFolders = p; } };
+    const { plugin, pending } = setup({ enabled: true, instance });
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 1, total: 3 });
+  });
+  it("fills syncManaged only with what Sync kept after the write (read-back)", async () => {
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["user/own"] }, setIgnoreFolders(p: string[]) { instance.filter.ignoreFolders = p.filter((x) => x !== "repo-empty"); } };
+    const { plugin, pending } = setup({ enabled: true, instance });
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    plugin.settings.pins = { "repo-empty": "hide" };
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    expect(instance.filter.ignoreFolders).toEqual(["user/own", "repo-notes/node_modules"]);
+    expect(plugin.settings.syncManaged).toEqual(["repo-notes/node_modules"]);
+    expect(plugin.syncStatus()).toEqual({ kind: "partial", arrived: 1, wanted: 2 });
+  });
+  it("reads back after a write that throws, because Sync changes its list in memory before it saves", async () => {
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: [] as string[] }, setIgnoreFolders(p: string[]) { instance.filter.ignoreFolders = p; throw new RangeError("Maximum call stack size exceeded"); } };
+    const { plugin, pending } = setup({ enabled: true, instance });
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    expect(plugin.syncStatus()).toEqual({ kind: "error", message: "Maximum call stack size exceeded" });
+    expect(plugin.settings.syncManaged).toEqual(["repo-notes/node_modules"]);
+  });
+  it("writes the same list once more after a throw, so Sync gets the chance to save it", async () => {
+    let throwNext = true;
+    const calls: string[][] = [];
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: [] as string[] }, setIgnoreFolders(p: string[]) { calls.push(p); instance.filter.ignoreFolders = p; if (throwNext) { throwNext = false; throw new RangeError("Maximum call stack size exceeded"); } } };
+    const { plugin, pending } = setup({ enabled: true, instance });
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 1, total: 1 });
+    expect(calls).toEqual([["repo-notes/node_modules"], ["repo-notes/node_modules"]]);
+  });
+  it("does not write a folder that lies below a folder the user already excluded", async () => {
+    const calls: string[][] = [];
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["repo-notes"] }, setIgnoreFolders(p: string[]) { calls.push(p); instance.filter.ignoreFolders = p; } };
+    const { plugin, pending } = setup({ enabled: true, instance });
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    expect(calls).toEqual([]);
+    expect(plugin.settings.syncManaged).toEqual([]);
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0, total: 1 });
   });
   it("reports sync as unavailable without the core plugin", async () => {
     const { plugin, pending } = setup();

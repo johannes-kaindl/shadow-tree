@@ -196,7 +196,8 @@ export class ShadowTreeSettingTab extends PluginSettingTab {
     const text = status.kind === "pending" ? t("sync.pending")
       : status.kind === "unavailable" ? t(`sync.unavailable.${status.reason}`)
       : status.kind === "error" ? t("sync.error", status.message)
-      : tn("sync.managed", status.managed);
-    host.createDiv({ cls: status.kind === "error" ? "sht-status sht-warning" : "sht-status", text });
+      : status.kind === "partial" ? t("sync.partial", String(status.arrived), String(status.wanted))
+      : tn("sync.managed", status.managed, status.total);
+    host.createDiv({ cls: status.kind === "error" || status.kind === "partial" ? "sht-status sht-warning" : "sht-status", text });
   }
 }

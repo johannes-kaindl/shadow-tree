@@ -6,6 +6,16 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The Sync status line no longer reports folders as excluded that Obsidian Sync did not keep: after each write the plugin reads Sync's exclusion list back, counts only what arrived and warns when Sync kept fewer.
+- A folder that lies below an already excluded folder is no longer written to Sync's exclusion list; Sync skips everything below an excluded folder anyway, so the list gets much shorter and Sync checks every file against fewer entries.
+- When Obsidian throws an error while saving the exclusion list, the plugin writes the same list once more on the next run instead of reporting the old state as fine.
+
+### Changed
+
+- The Sync status line also shows how many entries Sync's exclusion list holds in total, so the number can be compared with the one in Settings → Sync.
+
 ## [0.1.1] — 2026-10-03
 
 ### Changed

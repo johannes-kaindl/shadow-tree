@@ -16,7 +16,8 @@ import { snapshotVault } from "./obsidian/tree-snapshot";
 export type SyncStatus =
   | { kind: "pending" }
   | { kind: "unavailable"; reason: SyncUnavailable }
-  | { kind: "ok"; managed: number }
+  | { kind: "ok"; managed: number; total: number }
+  | { kind: "partial"; arrived: number; wanted: number }
   | { kind: "error"; message: string };
 
 /** Ansicht: Vault-Events werden auf 250 ms entprellt; der Sync-Schreibpfad wartet weitere 3 s Ruhe,
@@ -45,6 +46,9 @@ export default class ShadowTreePlugin extends Plugin {
   private viewDebounce!: Debouncer;
   private syncDebounce!: Debouncer;
   private lastSync: SyncStatus = { kind: "pending" };
+  /** Nach einem Wurf von `setIgnoreFolders` ist unklar, ob Sync die Liste gespeichert hat: der nächste Lauf schreibt
+   *  dieselbe Liste noch einmal, auch wenn der Plan „unverändert“ sagt. */
+  private retryWrite = false;
   private noticed = false;
   private unloaded = false;
 
@@ -138,21 +142,38 @@ export default class ShadowTreePlugin extends Plugin {
     // (Selbstsperre) — Review 2026-09-30, Befund 3.
     const desired = this.settings.syncExclude ? this.hidden.filter((h) => h.reason.kind !== "empty").map((h) => h.path) : [];
     const plan = planSyncExclusions(facade.getIgnoreFolders(), this.settings.syncManaged, desired);
-    if (plan.changed) {
+    let managed = plan.managed;
+    let failure: string | null = null;
+    if (plan.changed || this.retryWrite) {
       try {
         facade.setIgnoreFolders(plan.next);
+        this.retryWrite = false;
       } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        this.lastSync = { kind: "error", message };
-        new Notice(t("sync.error", message), 8000);
-        return;
+        failure = e instanceof Error ? e.message : String(e);
+        this.retryWrite = true;
       }
+      // Zurücklesen: gültig ist, was in Syncs Liste steht, nicht was wir schreiben wollten (CORE-DATA-01). Auch nach einem
+      // Wurf, denn Sync ändert seine Liste im Speicher, bevor `changeFilter` fertig ist und `forceSaveData` läuft
+      // (Messung 2026-10-23, Welle 26: `RangeError` aus `unshift.apply`, Liste im Speicher neu, Ablage alt).
+      const arrived = new Set(facade.getIgnoreFolders());
+      managed = plan.managed.filter((p) => arrived.has(p));
     }
-    if (plan.managed.join("\n") !== this.settings.syncManaged.join("\n")) {
-      this.settings.syncManaged = plan.managed;
+    if (managed.join("\n") !== this.settings.syncManaged.join("\n")) {
+      this.settings.syncManaged = managed;
       this.saveData(this.settings).catch((e: unknown) => { console.error("shadow-tree: saving syncManaged failed", e); });
     }
-    this.lastSync = { kind: "ok", managed: plan.managed.length };
+    if (failure !== null) {
+      this.lastSync = { kind: "error", message: failure };
+      new Notice(t("sync.error", failure), 8000);
+    } else if (managed.length < plan.managed.length) {
+      const was = this.lastSync;
+      this.lastSync = { kind: "partial", arrived: managed.length, wanted: plan.managed.length };
+      if (was.kind !== "partial" || was.arrived !== managed.length || was.wanted !== plan.managed.length) {
+        new Notice(t("sync.partial", String(managed.length), String(plan.managed.length)), 8000);
+      }
+    } else {
+      this.lastSync = { kind: "ok", managed: managed.length, total: facade.getIgnoreFolders().length };
+    }
   }
 
   private onSheetError(e: unknown): void {

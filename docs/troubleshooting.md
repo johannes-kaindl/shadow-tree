@@ -47,6 +47,10 @@ The status line under the switch names the reason:
 - **Obsidian Sync is enabled, but its exclusion list could not be reached in this version.** Obsidian changed the internal shape the plugin relies on. Please report the Obsidian version as an issue; the plugin keeps working without the Sync feature.
 - **Sync status has not been checked yet.** The plugin checks a few seconds after each change; reopen the tab.
 
+## The status line says Sync kept fewer folders than the plugin wrote
+
+**Cause:** after every write the plugin reads Sync's exclusion list back and counts only the folders that are really in it. A warning such as "Obsidian Sync kept only 1200 of 1446 folders" means Sync did not take the rest, or threw an error while saving. **What to do:** change anything in the vault or the settings; the plugin writes the missing folders again a few seconds later. If the warning stays, report the Obsidian version and the numbers as an issue. A folder that lies below another excluded folder is not written at all, because Sync already skips everything below an excluded folder; so the number in the status line can be lower than the number of hidden folders.
+
 ## Sync still lists folders after I disabled the plugin
 
 **Cause:** the plugin removes its own entries only while it runs and the switch is turned off; disabling the plugin with the switch on leaves them in Sync's excluded folders. Only folders hidden by a pattern or an "always hide" pin are ever written there. **What to do:** remove them under **Settings → Sync → Selective sync → Excluded folders**, or re-enable the plugin, turn the switch off, then disable it.
