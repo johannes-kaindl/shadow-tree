@@ -13,7 +13,7 @@
  */
 import { argv, cwd, exit } from "node:process";
 
-import { Cdp, attachTo, openExisting, requireUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
+import { Cdp, attachTo, openExisting, requireUntil, requireVisible, schliesseEinstellungen } from "../../tools/obsidian-cdp/cdp.js";
 import { capture, setWindowSize, writeShot, type Rect } from "../../tools/obsidian-cdp/shot.js";
 import { buildVault, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
 
@@ -165,7 +165,7 @@ async function main(): Promise<void> {
   } finally {
     if (revealed) await ws.evaluate(`const p = app.plugins.plugins[${q(PLUGIN_ID)}]; if (p && p.revealed) p.toggleReveal(); return true;`).catch(() => undefined);
     if (settingsWin) settingsWin.close();
-    await ws.evaluate(`app.setting.close(); return true;`).catch(() => undefined);
+    await schliesseEinstellungen(ws).catch(() => undefined);
     ws.close();
   }
 }

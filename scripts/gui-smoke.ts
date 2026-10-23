@@ -39,7 +39,7 @@ import { join } from "node:path";
 import { cwd } from "node:process";
 
 import { createBilanz, parseArgs, runDriver } from "../../tools/obsidian-cdp/bilanz.js";
-import { Cdp, attachTo, beimAbbruch, bereiteInstanzVor, istAbgebrochen, pollUntil, requireVisible } from "../../tools/obsidian-cdp/cdp.js";
+import { Cdp, attachTo, beimAbbruch, bereiteInstanzVor, istAbgebrochen, pollUntil, requireVisible, schliesseEinstellungen } from "../../tools/obsidian-cdp/cdp.js";
 import { buildVault, requireEigenerBuild, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
 
 const REPO_NAME = "shadow-tree";
@@ -124,9 +124,9 @@ async function main(): Promise<void> {
         const p = app.plugins.plugins[${q(PLUGIN_ID)}];
         if (p) { if (${pinnedForTest}) await p.setPin("repo-empty", null); if (p.revealed) p.toggleReveal(); }
         if (${createdNote}) { const f = app.vault.getAbstractFileByPath("repo-empty/smoke-note.md"); if (f) await app.fileManager.trashFile(f); }
-        if (app.setting && typeof app.setting.close === "function") app.setting.close();
         return true;
       `);
+      await schliesseEinstellungen(cdp);
     } catch { console.log("  ! Aufräumen im Renderer fehlgeschlagen — Pins/Notiz im Staging-Vault von Hand prüfen"); }
   };
   const zustand = beimAbbruch(zustandZurueck, "Pin, Reveal, Test-Notiz und Einstellungsfenster zurücksetzen");
@@ -246,7 +246,7 @@ async function main(): Promise<void> {
     if (ownWindow) sCdp.close();
     // Das Einstellungen-Fenster (ab 1.13 eigenes Fenster) schließt nur `app.setting.close()` im Hauptfenster; die
     // CDP-Verbindung zu schließen lässt es offen stehen (gemessen 2026-09-30: Zielliste zeigte es nach dem Lauf).
-    await cdp.evaluate(`app.setting.close(); return true;`).catch(() => undefined);
+    await schliesseEinstellungen(cdp).catch(() => undefined);
     await pollUntil<{ ok: boolean }>(cdp, `return document.querySelector(".modal-container") ? null : { ok: true };`, 4000, 200);
 
   } finally {
