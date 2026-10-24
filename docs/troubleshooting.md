@@ -38,6 +38,10 @@ Each entry names the symptom, the cause and what to do. The first stop is always
 
 **Cause:** the app version has no Constructable Stylesheets (iOS older than 16.4). The plugin then does nothing visible. **What to do:** update the device; there is no fallback because the alternative (`<style>` elements) is disallowed for community plugins.
 
+## My Obsidian Sync storage is full
+
+**Cause:** Sync uploads every image, audio, video and PDF file in non-excluded folders, which can be gigabytes of renders and exports in a vault that also holds project folders. **What to do:** follow [Keep Sync small](keep-sync-small.md): first switch off the file type that weighs most under **Settings → Sync → Selective sync**, or add the bulky folder names to **Ignore patterns** and turn on the Sync switch.
+
 ## The Sync switch is disabled
 
 The status line under the switch names the reason:

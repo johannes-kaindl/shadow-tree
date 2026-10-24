@@ -85,6 +85,7 @@ The plugin never touches the DOM of the file explorer. It reads the vault's fold
 
 - [Documentation index](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/README.md)
 - [Getting started](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/getting-started.md) — from installation to your first pin
+- [Keep Sync small](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/keep-sync-small.md) — your Obsidian Sync storage is full
 - [Ignore patterns](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/ignore-patterns.md) — the syntax, with examples
 - [Troubleshooting](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/troubleshooting.md) — a folder is visible or hidden when it should not be
 

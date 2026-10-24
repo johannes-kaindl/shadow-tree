@@ -85,6 +85,7 @@ Das Plugin fasst das DOM des Datei-Explorers nie an. Es liest den Ordnerbaum des
 
 - [Dokumentations-Index](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/README.md) (englisch)
 - [Erste Schritte](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/getting-started.md) — von der Installation zum ersten Pin
+- [Sync klein halten](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/keep-sync-small.md) — dein Obsidian-Sync-Speicher ist voll (englisch)
 - [Ausschlussmuster](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/ignore-patterns.md) — die Syntax mit Beispielen (englisch)
 - [Fehlersuche](https://github.com/johannes-kaindl/shadow-tree/blob/main/docs/troubleshooting.md) — ein Ordner ist sichtbar oder versteckt, obwohl er es nicht sein sollte
 

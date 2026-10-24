@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- A how-to guide, “Keep Sync small”, for a full Obsidian Sync storage: how to find the weight, when to switch off a file type in Sync and when to exclude output folders with the plugin, and what neither lever removes from the remote vault.
+
 ## [0.1.2] — 2026-10-23
 
 ### Fixed
