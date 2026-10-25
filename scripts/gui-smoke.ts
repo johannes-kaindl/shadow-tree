@@ -41,6 +41,7 @@ import { cwd } from "node:process";
 import { createBilanz, parseArgs, runDriver } from "../../tools/obsidian-cdp/bilanz.js";
 import { Cdp, attachTo, beimAbbruch, bereiteInstanzVor, istAbgebrochen, pollUntil, requireVisible, schliesseEinstellungen } from "../../tools/obsidian-cdp/cdp.js";
 import { buildVault, requireEigenerBuild, stagingVaultDir } from "../../tools/obsidian-cdp/vault.js";
+import { messeErreichbarkeit, zeichnePflicht } from "../../tools/obsidian-cdp/pflichtpunkte.js";
 
 const REPO_NAME = "shadow-tree";
 const PLUGIN_ID = "shadow-tree";
@@ -214,13 +215,15 @@ async function main(): Promise<void> {
 
     // --- H ---------------------------------------------------------------------
     console.log("\nH · Verdeckungsprobe");
-    const h = await cdp.evaluate<{ hit: boolean; tag: string | null }>(`
-      const el = document.querySelector('.nav-folder-title[data-path="repo-notes"]');
-      if (!el) return { hit: false, tag: null };
-      const r = el.getBoundingClientRect(); const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-      return { hit: !!at && (at === el || el.contains(at)), tag: at ? at.className : null };
-    `);
-    record("H elementFromPoint auf repo-notes trifft die Titelzeile", h.hit, `getroffen=${q(h.tag)}`);
+    // Baustein der Dach-Brücke statt eigener `elementFromPoint`-Probe (Meldestelle TREIBER-PFLICHT, Welle 27). Ohne wachsenden Bereich:
+    // die Titelzeile liegt in einem festen Baum, also `scrollen: false` und ein ausdrücklicher Grund statt Füllen und Gegenprobe.
+    const TITELZEILE = '.nav-folder-title[data-path="repo-notes"]';
+    zeichnePflicht(bilanz, "H elementFromPoint auf repo-notes trifft die Titelzeile", await messeErreichbarkeit(cdp, {
+      selektoren: [TITELZEILE],
+      scrollen: false,
+      ohneUeberlauf: "Datei-Explorer: kein wachsender Ausgabebereich, die Titelzeile liegt in einem festen Baum",
+      erforderlich: [TITELZEILE],
+    }));
     // --- G ---------------------------------------------------------------------
     console.log("\nG · Settings-Tab");
     await cdp.evaluate(`app.setting.open(); await new Promise((r) => setTimeout(r, 500)); app.setting.openTabById(${q(PLUGIN_ID)}); await new Promise((r) => setTimeout(r, 1000)); return true;`);
