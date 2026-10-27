@@ -37,26 +37,37 @@ function gather(node: FolderNode, rules: EvaluateRules, ext: Set<string>, facts:
 }
 
 /** Zweiter Durchlauf, von oben nach unten: der erste ausgeblendete Ordner auf einem Pfad wird ausgegeben,
- *  seine Kinder nicht mehr (ihr Container verschwindet mit ihm). */
-function walk(node: FolderNode, rules: EvaluateRules, facts: Map<FolderNode, Facts>, out: HiddenFolder[], isRoot: boolean): void {
+ *  seine Kinder nicht mehr (ihr Container verschwindet mit ihm). Mit `sync` läuft er durch „leere“ Ordner hindurch und
+ *  gibt nur Muster- und Pin-Treffer aus: ein leerer Ordner bleibt in Syncs Liste draußen (Anhänge), seine Muster-Kinder
+ *  (`__pycache__`, `node_modules`) gehören trotzdem hinein. */
+function walk(node: FolderNode, rules: EvaluateRules, facts: Map<FolderNode, Facts>, out: HiddenFolder[], isRoot: boolean, sync: boolean): void {
   if (!isRoot) {
     const f = facts.get(node) ?? { relevant: false, protectedShow: false };
     if (!f.protectedShow) {
       if (rules.pins[node.path] === "hide") { out.push({ path: node.path, reason: { kind: "pinned" } }); return; }
       const pattern = matchIgnore(rules.rules, node.path);
       if (pattern !== null) { out.push({ path: node.path, reason: { kind: "pattern", pattern } }); return; }
-      if (rules.hideEmpty && !f.relevant) { out.push({ path: node.path, reason: { kind: "empty" } }); return; }
+      if (rules.hideEmpty && !f.relevant && !sync) { out.push({ path: node.path, reason: { kind: "empty" } }); return; }
     }
   }
-  for (const child of node.folders) walk(child, rules, facts, out, false);
+  for (const child of node.folders) walk(child, rules, facts, out, false, sync);
 }
 
-/** Oberste auszublendende Ordner, nach Pfad sortiert. Der Root wird nie ausgegeben. */
-export function evaluate(root: FolderNode, rules: EvaluateRules): HiddenFolder[] {
+function run(root: FolderNode, rules: EvaluateRules, sync: boolean): HiddenFolder[] {
   const ext = new Set(rules.relevantExtensions.map((e) => e.toLowerCase()));
   const facts = new Map<FolderNode, Facts>();
   gather(root, rules, ext, facts);
   const out: HiddenFolder[] = [];
-  walk(root, rules, facts, out, true);
+  walk(root, rules, facts, out, true, sync);
   return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+}
+
+/** Oberste auszublendende Ordner, nach Pfad sortiert. Der Root wird nie ausgegeben. */
+export function evaluate(root: FolderNode, rules: EvaluateRules): HiddenFolder[] {
+  return run(root, rules, false);
+}
+
+/** Oberste Muster- und Pin-Treffer für Obsidian Sync, auch unter einem als „leer“ ausgeblendeten Vorfahren. */
+export function evaluateSyncTargets(root: FolderNode, rules: EvaluateRules): HiddenFolder[] {
+  return run(root, rules, true);
 }

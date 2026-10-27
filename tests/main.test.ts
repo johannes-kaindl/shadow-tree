@@ -28,7 +28,7 @@ function setup(sync?: unknown) {
   };
   const pending: (() => void)[] = [];
   plugin.timers = { set: (cb) => { pending.push(cb); return pending.length; }, clear: () => {} };
-  return { plugin, updates, events, pending, removedRef: () => removed, app };
+  return { plugin, updates, events, pending, removedRef: () => removed, app, root };
 }
 
 describe("ShadowTreePlugin", () => {
@@ -74,6 +74,19 @@ describe("ShadowTreePlugin", () => {
     pending.splice(0).forEach((cb) => cb());
     expect(calls.at(-1)).toEqual(["user/own"]);
     expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 0, total: 1 });
+  });
+  it("excludes pattern folders that lie below a folder hidden as empty (hideEmpty on)", async () => {
+    const instance = { vaultId: "remote-1", filter: { ignoreFolders: [] as string[] }, setIgnoreFolders(p: string[]) { instance.filter.ignoreFolders = p; } };
+    const { plugin, pending, root } = setup({ enabled: true, instance });
+    const empty = root.children.find((c) => c.path === "repo-empty") as TFolder;
+    empty.children.push(folder("repo-empty/__pycache__", new TFile("repo-empty/__pycache__/x.pyc", "pyc")));
+    await plugin.onload();
+    plugin.settings.syncExclude = true;
+    await plugin.saveSettings();
+    pending.splice(0).forEach((cb) => cb());
+    // repo-empty selbst bleibt draußen (Anhänge), sein __pycache__ gehört hinein.
+    expect(instance.filter.ignoreFolders).toEqual(["repo-empty/__pycache__", "repo-notes/node_modules"]);
+    expect(plugin.syncStatus()).toEqual({ kind: "ok", managed: 2, total: 2 });
   });
   it("reports the size of Sync's whole list next to its own share", async () => {
     const instance = { vaultId: "remote-1", filter: { ignoreFolders: ["u/1", "u/2"] }, setIgnoreFolders(p: string[]) { instance.filter.ignoreFolders = p; } };

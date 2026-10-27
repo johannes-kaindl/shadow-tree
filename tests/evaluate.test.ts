@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluate, rulesFromSettings, type EvaluateRules } from "../src/core/evaluate";
+import { evaluate, evaluateSyncTargets, rulesFromSettings, type EvaluateRules } from "../src/core/evaluate";
 import type { FolderNode } from "../src/core/tree";
 import { parsePatterns } from "../src/vendor/kit/ignore";
 import { DEFAULT_SETTINGS } from "../src/core/settings";
@@ -71,6 +71,34 @@ describe("evaluate", () => {
   it("output is sorted by path", () => {
     const h = paths(evaluate(f("", [], [f("z"), f("a"), f("m")]), rules()));
     expect(h).toEqual(["a", "m", "z"]);
+  });
+});
+
+describe("evaluateSyncTargets", () => {
+  const pyc = (parent: string) => f(`${parent}/__pycache__`, ["pyc"]);
+  const tree = f("", ["md"], [
+    f("repo-a", ["md"], [f("repo-a/node_modules", [], [f("repo-a/node_modules/node_modules")])]),
+    f("repo-empty", [], [f("repo-empty/src", ["py"], [pyc("repo-empty/src")]), f("repo-empty/node_modules", [], [f("repo-empty/node_modules/x", ["md"])])]),
+  ]);
+  const patterns = parsePatterns("node_modules\n__pycache__").rules;
+
+  it("finds pattern folders below a folder that is itself hidden as empty (evaluate stops at the empty parent)", () => {
+    expect(paths(evaluate(tree, rules({ rules: patterns })))).toEqual(["repo-a/node_modules", "repo-empty"]);
+    expect(paths(evaluateSyncTargets(tree, rules({ rules: patterns })))).toEqual(["repo-a/node_modules", "repo-empty/node_modules", "repo-empty/src/__pycache__"]);
+  });
+  it("never lists a bare empty folder and stops at the first pattern hit on a path", () => {
+    const h = evaluateSyncTargets(tree, rules({ rules: patterns }));
+    expect(paths(h)).not.toContain("repo-empty");
+    expect(paths(h)).not.toContain("repo-a/node_modules/node_modules");
+    expect(h.every((x) => x.reason.kind === "pattern")).toBe(true);
+  });
+  it("includes hide pins below an empty parent and honours show pins", () => {
+    const withPins = rules({ rules: patterns, pins: { "repo-empty/src": "hide", "repo-empty/node_modules": "show" } });
+    expect(paths(evaluateSyncTargets(tree, withPins))).toEqual(["repo-a/node_modules", "repo-empty/src"]);
+  });
+  it("is identical to evaluate without empty folders when hideEmpty is off", () => {
+    const r = rules({ hideEmpty: false, rules: patterns });
+    expect(paths(evaluateSyncTargets(tree, r))).toEqual(paths(evaluate(tree, r)));
   });
 });
 

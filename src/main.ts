@@ -3,7 +3,7 @@ import "./i18n/strings";
 import { pickLang, setLang, t } from "./vendor/kit/i18n";
 import { tn } from "./i18n/strings";
 import { createDebouncer, type Debouncer, type Timers } from "./core/debounce";
-import { evaluate, rulesFromSettings, type HiddenFolder } from "./core/evaluate";
+import { evaluate, evaluateSyncTargets, rulesFromSettings, type HiddenFolder } from "./core/evaluate";
 import { ribbonState } from "./core/hidden-view";
 import { loadSettings, pinOf, withPin, type PinState, type ShadowTreeSettings } from "./core/settings";
 import { planSyncExclusions } from "./core/sync-plan";
@@ -33,6 +33,8 @@ export default class ShadowTreePlugin extends Plugin {
   settings: ShadowTreeSettings = loadSettings(null);
   /** Oberste ausgeblendete Ordner der letzten Berechnung. */
   hidden: HiddenFolder[] = [];
+  /** Muster- und Pin-Treffer für Obsidian Sync, auch unter „leer“ ausgeblendeten Vorfahren; leer, solange der Opt-in aus ist. */
+  syncTargets: HiddenFolder[] = [];
   invalidPatterns: string[] = [];
   /** Sitzungszustand „alles einblenden“; nicht persistiert (Spec § 6). */
   revealed = false;
@@ -103,7 +105,9 @@ export default class ShadowTreePlugin extends Plugin {
   recompute(): void {
     const { rules, invalidPatterns } = rulesFromSettings(this.settings);
     this.invalidPatterns = invalidPatterns;
-    this.hidden = evaluate(snapshotVault(this.app.vault.getRoot()), rules);
+    const snapshot = snapshotVault(this.app.vault.getRoot());
+    this.hidden = evaluate(snapshot, rules);
+    this.syncTargets = this.settings.syncExclude ? evaluateSyncTargets(snapshot, rules) : [];
     this.applyView();
     this.syncDebounce.schedule();
   }
@@ -139,8 +143,9 @@ export default class ShadowTreePlugin extends Plugin {
     if (!facade.available) { this.lastSync = { kind: "unavailable", reason: facade.reason }; return; }
     // Nur Muster- und Pin-Treffer wandern in die Sync-Liste. Ein bloß „leerer“ Ordner kann Anhänge tragen, die der
     // Nutzer auf anderen Geräten will, und ein auf Gerät B leerer Ordner bekäme dort nie die Notizen von Gerät A
-    // (Selbstsperre) — Review 2026-09-30, Befund 3.
-    const desired = this.settings.syncExclude ? this.hidden.filter((h) => h.reason.kind !== "empty").map((h) => h.path) : [];
+    // (Selbstsperre) — Review 2026-09-30, Befund 3. Die Treffer kommen aus `evaluateSyncTargets`, nicht aus `hidden`:
+    // dort verschluckt ein „leerer“ Elternordner alle Muster-Kinder darunter (`__pycache__` in `scripts/` ohne Notizen).
+    const desired = this.syncTargets.map((h) => h.path);
     const plan = planSyncExclusions(facade.getIgnoreFolders(), this.settings.syncManaged, desired);
     let managed = plan.managed;
     let failure: string | null = null;

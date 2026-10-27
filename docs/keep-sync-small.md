@@ -35,7 +35,7 @@ If the weight sits in a few folders (typically named `out`, `output`, `renders`,
 
 Two things to know:
 
-- **Hidden because empty is not excluded.** Shadow Tree writes only folders hidden by a pattern or an **Always hide** pin into Sync's list. A folder that is merely hidden because it holds no notes still syncs. If a bulky folder is hidden only for that reason, add a pattern or pin it **Always hide**.
+- **Hidden because empty is not excluded.** Shadow Tree writes only folders hidden by a pattern or an **Always hide** pin into Sync's list. A folder that is merely hidden because it holds no notes still syncs, but a pattern folder inside it (`node_modules`, `__pycache__`) is excluded on its own. If a bulky folder is hidden only for that reason, add a pattern or pin it **Always hide**.
 - **The folder disappears from your file explorer too.** It is still on disk and still readable by other programs. Reveal it with the eye icon in the ribbon when you need to see it.
 
 The exclusion is stored per device. Turn the switch on on every device that should exclude the folders, and note that Sync's own list on another device does not change by itself.

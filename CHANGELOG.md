@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- Sync exclusion no longer misses `node_modules`, `__pycache__`, `dist` and the like that lie below a folder hidden only because it is empty. With “Hide empty folders” on, such a parent (a `scripts` folder without notes, say) swallowed every pattern folder below it, so in a real vault with 1,784 hidden folders only 98 of the 1,456 pattern folders reached Obsidian Sync's list. The empty parent itself still stays out of the list, because it may hold attachments.
+
 ### Added
 
 - A how-to guide, “Keep Sync small”, for a full Obsidian Sync storage: how to find the weight, when to switch off a file type in Sync and when to exclude output folders with the plugin, and what neither lever removes from the remote vault.
